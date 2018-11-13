@@ -1,0 +1,21 @@
+{
+    "name": "cristiroma/heavy-lifter",
+    "description": "Common commands for your Drupal project to get you up to speed",
+    "type": "library",
+    "require": {
+        "webflo/drupal-finder": "^1.1",
+        "firebase/php-jwt": "^5.0",
+        "boedah/robo-drush": "^4.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "5.7"
+    },
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Cristian Romanescu",
+            "email": "cristian@romanescu.ro"
+        }
+    ],
+    "minimum-stability": "stable"
+}
