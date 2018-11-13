@@ -1,5 +1,5 @@
 {
-    "name": "cristiroma/heavy-lifter",
+    "name": "eaudeweb/heavy-lifter",
     "description": "Common commands for your Drupal project to get you up to speed",
     "type": "library",
     "require": {
@@ -9,6 +9,11 @@
     },
     "require-dev": {
         "phpunit/phpunit": "5.7"
+    },
+    "autoload": {
+      "psr-4": {
+        "EauDeWeb\\": "src/"
+      }
     },
     "license": "Apache-2.0",
     "authors": [
