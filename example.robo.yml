@@ -1,0 +1,13 @@
+project:
+  version: "2.0"
+  sites:
+    default:
+      sync:
+        username: username
+        password: password
+        sql:
+          url: https://srv.storage.com/sync/database.sql.gz
+        files:
+          url: https://srv.storage.com/sync/files.tar.gz
+      develop:
+        admin_username: user@mail.com

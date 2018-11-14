@@ -49,4 +49,53 @@ class SiteCommands extends CommandBase {
       $this->yell("Skipping import of 'dev' profile because it's missing");
     }
   }
+
+
+  /**
+   * Create new configuration file.
+   *
+   * @command site:config
+   *
+   * @throws \ReflectionException
+   */
+  public function siteConfig() {
+    $reflector = new \ReflectionClass('EauDeWeb\Robo\Plugin\Commands\SiteCommands');
+    if ($source = realpath(dirname($reflector->getFileName()) . '/../../../../example.robo.yml')) {
+      // example.robo.yml
+      $dest = $this->projectDir() . DIRECTORY_SEPARATOR . 'example.robo.yml';
+      if (!file_exists($dest)) {
+        copy($source, $dest);
+        $this->yell('Configuration template created: ' . $dest);
+      }
+      else {
+        $this->yell('Configuration file already exists and it was left intact: ' . $dest);
+      }
+
+      // robo.yml
+      $dest = $this->projectDir() . DIRECTORY_SEPARATOR . 'robo.yml';
+      if (!file_exists($dest)) {
+        copy($source, $dest);
+        $this->yell('Your personal configuration created: ' . $dest);
+      }
+      else {
+        $this->yell('Personal configuration already exists and it was left intact: ' . $dest);
+      }
+
+      // Check .gitignore for robo.yml and add it
+      $ignore = $this->projectDir() . DIRECTORY_SEPARATOR . '.gitignore';
+      if (file_exists($ignore)) {
+        $content = file_get_contents($ignore);
+        $content = explode(PHP_EOL, $content);
+        if (!in_array('robo.yml', $content)) {
+          $content[] = 'robo.yml';
+          file_put_contents($ignore, implode(PHP_EOL, $content));
+          $this->yell('Added robo.yml to project .gitignore');
+        }
+        else {
+          $this->yell('.gitignore already ignores robo.yml ...');
+        }
+      }
+    }
+
+  }
 }
