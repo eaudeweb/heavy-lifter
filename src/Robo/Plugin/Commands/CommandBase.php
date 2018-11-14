@@ -7,6 +7,7 @@ namespace EauDeWeb\Robo\Plugin\Commands;
 
 use EauDeWeb\Robo\InvalidConfigurationException;
 use Robo\Robo;
+use Symfony\Component\Process\Process;
 
 /**
  * Class CommandBase for other commands.
@@ -102,5 +103,58 @@ class CommandBase extends \Robo\Tasks {
       realpath(getcwd() . '/vendor/drush/drush/drush');
     }
     throw new InvalidConfigurationException('Cannot find Drush executable inside this project');
+  }
+
+  /**
+   * Find Drupal root installation.
+   *
+   * @return string
+   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   */
+  protected function drupalRoot() {
+    $drupalFinder = new \DrupalFinder\DrupalFinder();
+    if ($drupalFinder->locateRoot(getcwd())) {
+      return $drupalFinder->getDrupalRoot();
+    }
+    else {
+      throw new InvalidConfigurationException("Cannot find Drupal root installation folder");
+    }
+  }
+
+
+  /**
+   * Detect drush version.
+   *
+   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   */
+  protected function getDrushVersion() {
+    $drush = $this->drushExecutable();
+    $p = new Process([$drush, 'version', '--format=json']);
+    $p->run();
+    if ($output = $p->getOutput()) {
+      // Try Drush 9
+      if ($version = json_decode($output, TRUE)) {
+        if (isset($version['drush-version'])) {
+          return $version['drush-version'];
+        }
+      }
+      else {
+        // Try Drush 8
+        if (preg_match("/\d+\.\d+.\d+/", $output)) {
+          return $output;
+        }
+      }
+    }
+    return FALSE;
+  }
+
+
+  /**
+   * @return bool
+   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   */
+  protected function isDrush9() {
+    $drushVersion = $this->getDrushVersion();
+    return version_compare($drushVersion, '9') >= 0;
   }
 }
