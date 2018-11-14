@@ -3,18 +3,17 @@
 namespace EauDeWeb\Robo\Plugin\Commands;
 
 
-class HeavyLifterProjectCommands extends \Robo\Tasks {
+class DummyCommands extends CommandBase {
 
   /**
    * Do ... well ... nothing.
    *
-   * @throws Exception
-   *
    * @command do:nothing
+   *
+   * @throws \EauDeWeb\Robo\InvalidConfigurationException
    */
   public function doNothing() {
-    Utilities::validateGlobalConfig();
+    $this->validateConfig();
     $this->say('Done doing nothing ¯\_ツ_/¯');
   }
-
 }
