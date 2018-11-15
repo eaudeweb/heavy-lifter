@@ -51,7 +51,7 @@ class SiteCommands extends CommandBase {
 
     $root = $this->projectDir();
     if ($dev = realpath($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'dev')) {
-      $this->taskExec($drush)->arg('config:import')->arg('dev')->arg('--partial')->run();
+      $this->taskExec($drush)->arg('config:import')->arg('dev')->arg('--partial')->rawArg('-y')->run();
     } else {
       $this->yell("Skipping import of 'dev' profile because it's missing");
     }
