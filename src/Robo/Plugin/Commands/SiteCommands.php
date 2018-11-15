@@ -4,6 +4,14 @@ namespace EauDeWeb\Robo\Plugin\Commands;
 
 
 
+use Robo\Robo;
+use Symfony\Component\Console\Output\NullOutput;
+
+/**
+ * Class SiteCommands with commands specific to manage site structure/data.
+ *
+ * @package EauDeWeb\Robo\Plugin\Commands
+ */
 class SiteCommands extends CommandBase {
 
   /**
@@ -16,7 +24,6 @@ class SiteCommands extends CommandBase {
       $this->yell('project.sites.default.develop.admin_username not set, password will not be reset');
     }
   }
-
 
   /**
    * Setup development.
@@ -49,7 +56,6 @@ class SiteCommands extends CommandBase {
       $this->yell("Skipping import of 'dev' profile because it's missing");
     }
   }
-
 
   /**
    * Create new configuration file.
@@ -95,7 +101,15 @@ class SiteCommands extends CommandBase {
           $this->yell('.gitignore already ignores robo.yml ...');
         }
       }
-    }
 
+      // Create a default empty RoboFile.php to properly initialize robo.
+      $roboFile = $this->projectDir() . DIRECTORY_SEPARATOR . 'RoboFile.php';
+      if (!file_exists($roboFile)) {
+        $app = Robo::application();
+        $init = $app->get('init');
+        $init->run(Robo::input(), new NullOutput());
+        $this->yell('Created default RoboFile.php. You can add later project specific commands here.');
+      }
+    }
   }
 }
