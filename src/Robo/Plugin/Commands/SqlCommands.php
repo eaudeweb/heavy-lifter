@@ -5,6 +5,7 @@ namespace EauDeWeb\Robo\Plugin\Commands;
 
 
 use EauDeWeb\Robo\InvalidConfigurationException;
+use Robo\Exception\TaskException;
 
 class SqlCommands extends CommandBase {
 
@@ -91,5 +92,32 @@ class SqlCommands extends CommandBase {
       return $build->run();
     }
     return $download;
+  }
+
+
+  /**
+   * Create archive with database dump directory to the given path
+   *
+   * @command sql:dump
+   * @option gzip Create a gzipped archive dump. Default TRUE.
+   *
+   * @param string $output Absolute path to the resulting archive
+   * @param array $options Command line options
+   *
+   * @return null|\Robo\Result
+   * @throws \Robo\Exception\TaskException when output path is not absolute
+   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   */
+  public function sqlDump($output, $options = ['gzip' => true]) {
+    if ($output[0] != '/') {
+      throw new TaskException($this,'Output must be an absolute path');
+    }
+    $drush = $this->drushExecutable();
+    $task = $this->taskExec($drush)->rawArg('sql:dump')->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history');
+    $task->option('result-file', $output);
+    if ($options['gzip']) {
+      $task->arg('--gzip');
+    }
+    return $task->run();
   }
 }

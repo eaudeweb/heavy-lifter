@@ -67,11 +67,11 @@ class FilesCommands extends CommandBase {
 
 
   /**
-   * Create archive with files directory into /sync/files.tar.gz.
+   * Create archive with files directory to the given path.
+   *
+   * @param string $output Absolute path to the resulting archive
    *
    * @command files:archive
-   *
-   * @argument $output Absolute path to the resulting archive
    *
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
