@@ -2,8 +2,6 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
-
-
 use Robo\Robo;
 use Symfony\Component\Console\Output\NullOutput;
 
@@ -55,6 +53,35 @@ class SiteCommands extends CommandBase {
     } else {
       $this->yell("Skipping import of 'dev' profile because it's missing");
     }
+  }
+
+  /**
+   * Update the local instance: import configuration, update database, rebuild
+   * cache.
+   *
+   * @command site:update
+   *
+   * @return null|\Robo\Result
+   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   * @throws \Robo\Exception\TaskException
+   */
+  public function siteUpdate() {
+    $this->validateConfig();
+    $drush = $this->drushExecutable();
+    // Allow updatedb to fail once and execute it again after config:import.
+    $this->taskExec("{$drush} updatedb -y")->run();
+    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+    $execStack->exec("{$drush} cr");
+    if ($this->configSite('develop.config_split') === TRUE) {
+      $execStack->exec("{$drush} csim -y");
+    }
+    else {
+      $execStack->exec("{$drush} cim sync -y");
+    }
+    $execStack->exec("{$drush} updatedb -y");
+    $execStack->exec("{$drush} entup -y");
+    $execStack->exec("{$drush} cr");
+    return $execStack->run();
   }
 
   /**

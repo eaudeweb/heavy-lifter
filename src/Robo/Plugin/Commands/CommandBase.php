@@ -16,7 +16,7 @@ use Symfony\Component\Process\Process;
  */
 class CommandBase extends \Robo\Tasks {
 
-  const FILE_FORMAT_VERSION = '2.0';
+  const FILE_FORMAT_VERSION = '2.1';
 
   /**
    * Check configuration file consistency.
@@ -62,12 +62,11 @@ class CommandBase extends \Robo\Tasks {
   protected function configSite($key, $site = 'default') {
     $config = Robo::config();
     $full = 'project.sites.' . $site . '.' . $key;
-    if ($value = $config->get($full)) {
-      return $value;
-    } else {
+    $value = $config->get($full);
+    if ($value === NULL) {
       $this->yell('Missing configuration key: ' . $full);
     }
-    return null;
+    return $value;
   }
 
   /**

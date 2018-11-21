@@ -1,5 +1,5 @@
 project:
-  version: "2.0"
+  version: "2.1"
   sites:
     default:
       sync:
@@ -11,3 +11,4 @@ project:
           url: https://srv.storage.com/sync/files.tar.gz
       develop:
         admin_username: user@mail.com
+        config_split: FALSE
