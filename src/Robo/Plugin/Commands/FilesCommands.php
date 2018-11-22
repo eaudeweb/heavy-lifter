@@ -2,9 +2,6 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
-
-
-use EauDeWeb\Robo\InvalidConfigurationException;
 use Robo\Exception\TaskException;
 
 class FilesCommands extends CommandBase {
@@ -16,12 +13,12 @@ class FilesCommands extends CommandBase {
     parent::validateConfig();
     $url =  $this->configSite('sync.files.url');
     if (!empty($url) && strpos($url, 'https://') !== 0) {
-      throw new InvalidConfigurationException(
+      throw new TaskException(
+        $this,
         'Files sync URL is not HTTPS, cannot send credentials over unencrypted connection to: ' . $url
       );
     }
   }
-
 
   /**
    * Sync public files from staging server.
@@ -43,7 +40,7 @@ class FilesCommands extends CommandBase {
     $root = $this->drupalRoot();
     $files_dir = $root . '/sites/' . $site . '/files';
     if (!is_writable($files_dir)) {
-      throw new \Exception("{$files_dir} does not exists or is not writable");
+      throw new TaskException($this, "{$files_dir} does not exists or is not writable");
     }
 
     $download = $this->tmpDir() . '/' . $files_tar_gz;
@@ -75,7 +72,6 @@ class FilesCommands extends CommandBase {
    *
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
-   * @throws \EauDeWeb\Robo\InvalidConfigurationException
    */
   public function filesDump($output) {
     if ($output[0] != '/') {
