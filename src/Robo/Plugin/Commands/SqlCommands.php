@@ -70,13 +70,13 @@ class SqlCommands extends CommandBase {
     if (($download = $this->sqlDownload()) && $download->wasSuccessful()) {
       // @TODO How can we retrieve the downloaded file path from sqlDownload()?
       $sql_dump = $this->tmpDir() . '/database.sql';
-      $sql_dump_gz = $sql_dump . '.gz';
+      $sql_dump_gz = $sql_dump . '.gz' . ' > ' . $sql_dump;
 
       $build = $this->collectionBuilder();
       $build->addTask(
         $this->taskExec('gzip')
           ->option('-d')
-          ->option('--keep')
+          ->option('-c')
           ->arg($sql_dump_gz)
       );
 
