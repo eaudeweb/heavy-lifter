@@ -68,6 +68,7 @@ class SiteCommands extends CommandBase {
   public function siteUpdate() {
     $this->validateConfig();
     $drush = $this->drushExecutable();
+    $this->taskExec($drush)->arg("state-set")->arg("system.maintenance_mode")->arg("TRUE")->run();
     // Allow updatedb to fail once and execute it again after config:import.
     $this->taskExec("{$drush} updatedb -y")->run();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
@@ -81,6 +82,7 @@ class SiteCommands extends CommandBase {
     $execStack->exec("{$drush} updatedb -y");
     $execStack->exec("{$drush} entup -y");
     $execStack->exec("{$drush} cr");
+    $this->taskExec($drush)->arg("state-set")->arg("system.maintenance_mode")->arg("FALSE")->run();
     return $execStack->run();
   }
 
