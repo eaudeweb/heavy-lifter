@@ -81,6 +81,8 @@ class SiteCommands extends CommandBase {
     }
     $execStack->exec("{$drush} updatedb -y");
     $execStack->exec("{$drush} entup -y");
+    $execStack->exec("{$drush} locale:check");
+    $execStack->exec("{$drush} locale:update");
     $execStack->exec("{$drush} cr");
     $this->taskExec($drush)->arg("state-set")->arg("system.maintenance_mode")->arg("FALSE")->run();
     return $execStack->run();
