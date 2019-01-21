@@ -76,8 +76,10 @@ class SqlCommands extends CommandBase {
       $build->addTask(
         $this->taskExec('gzip')
           ->option('-d')
-          ->option('--keep')
-          ->arg($sql_dump_gz)
+          ->args($sql_dump_gz)
+          ->option('-c')
+          ->rawArg('>')
+          ->args($sql_dump)
       );
 
       $drush = $this->drushExecutable();
