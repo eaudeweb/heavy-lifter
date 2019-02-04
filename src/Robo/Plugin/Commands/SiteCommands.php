@@ -68,15 +68,10 @@ class SiteCommands extends CommandBase {
   public function siteUpdate() {
     $this->validateConfig();
     $drush = $this->drushExecutable();
-
-    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
-    $execStack->exec("{$drush} state-set system.maintenance_mode TRUE");
-
+    $this->taskExec($drush)->arg("state-set")->arg("system.maintenance_mode")->arg("TRUE")->run();
     // Allow updatedb to fail once and execute it again after config:import.
-    $execStack->stopOnFail(FALSE);
-    $execStack->exec("{$drush} updatedb -y");
-
-    $execStack->stopOnFail(TRUE);
+    $this->taskExec("{$drush} updatedb -y")->run();
+    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $execStack->exec("{$drush} cr");
     if ($this->configSite('develop.config_split') === TRUE) {
       $execStack->exec("{$drush} csim -y");
@@ -89,7 +84,7 @@ class SiteCommands extends CommandBase {
     $execStack->exec("{$drush} locale:check");
     $execStack->exec("{$drush} locale:update");
     $execStack->exec("{$drush} cr");
-    $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
+    $this->taskExec($drush)->arg("state-set")->arg("system.maintenance_mode")->arg("FALSE")->run();
     return $execStack->run();
   }
 
