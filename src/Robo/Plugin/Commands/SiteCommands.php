@@ -2,6 +2,7 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
+use Robo\Result;
 use Robo\Robo;
 use Symfony\Component\Console\Output\NullOutput;
 
@@ -68,9 +69,12 @@ class SiteCommands extends CommandBase {
   public function siteUpdate() {
     $this->validateConfig();
     $drush = $this->drushExecutable();
-    $this->taskExec($drush)->arg("state-set")->arg("system.maintenance_mode")->arg("TRUE")->run();
+
+    $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
+
     // Allow updatedb to fail once and execute it again after config:import.
     $this->taskExec("{$drush} updatedb -y")->run();
+
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $execStack->exec("{$drush} cr");
     if ($this->configSite('develop.config_split') === TRUE) {
@@ -80,11 +84,10 @@ class SiteCommands extends CommandBase {
       $execStack->exec("{$drush} cim sync -y");
     }
     $execStack->exec("{$drush} updatedb -y");
-    $execStack->exec("{$drush} entup -y");
     $execStack->exec("{$drush} locale:check");
     $execStack->exec("{$drush} locale:update");
     $execStack->exec("{$drush} cr");
-    $this->taskExec($drush)->arg("state-set")->arg("system.maintenance_mode")->arg("FALSE")->run();
+    $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
     return $execStack->run();
   }
 
@@ -144,3 +147,4 @@ class SiteCommands extends CommandBase {
     }
   }
 }
+
