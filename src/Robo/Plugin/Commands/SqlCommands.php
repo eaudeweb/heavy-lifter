@@ -92,7 +92,7 @@ class SqlCommands extends CommandBase {
   public function sqlDump($output, $options = ['gzip' => true]) {
     $output = preg_replace('/.gz$/', '', $output);
     if ($output[0] != '/') {
-      throw new TaskException($this,'Output must be an absolute path');
+      $output = getcwd() . '/' . $output;
     }
     $drush = $this->drushExecutable();
     $task = $this->taskExec($drush)->rawArg('sql:dump')->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history');
