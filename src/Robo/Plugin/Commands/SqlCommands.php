@@ -64,13 +64,27 @@ class SqlCommands extends CommandBase {
         $this->taskExec('gzip')->option('-d')->arg($dest_gz)
       );
       $drush = $this->drushExecutable();
-      $drush = $this->taskDrushStack($drush)
-        ->drush('sql:drop')
-        ->drush(['sql:query','--file', $dest]);
 
+      if ($this->configSite('sync.drupal_version') == 8) {
+        // Create the sql drush command
+        $drush = $this->taskDrushStack($drush)
+          ->drush('sql:drop')
+          ->drush(['sql:query','--file', $dest]);
+
+      } else { //Drupal 7
+        // Create the sql drush command
+        $drush = $this->taskDrushStack($drush)
+          ->drush('sql-drop')
+          ->drush(['sql-query', '--file=' . $dest])
+          ->dir('docroot');
+
+      }
+
+      // Add the anonymize command if required
       if ($options['anonymize']) {
         $drush->drush("project:anonymize -y");
       }
+
       $build->addTask($drush);
       return $build->run();
     }
@@ -95,8 +109,20 @@ class SqlCommands extends CommandBase {
       $output = getcwd() . '/' . $output;
     }
     $drush = $this->drushExecutable();
-    $task = $this->taskExec($drush)->rawArg('sql:dump')->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history');
+    if ($this->configSite('sync.drupal_version') == 8) {
+      $task = $this->taskExec($drush)
+        ->rawArg('sql:dump')
+        ->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history');
+
+    } else { // Drupal 7
+      $task = $this->taskExec($drush)
+        ->rawArg('sql-dump')
+        ->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history')
+        ->dir('docroot');
+
+    }
     $task->option('result-file', $output);
+
     if ($options['gzip']) {
       $task->arg('--gzip');
     }

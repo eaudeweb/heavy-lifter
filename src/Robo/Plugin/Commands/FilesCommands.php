@@ -75,7 +75,7 @@ class FilesCommands extends CommandBase {
    */
   public function filesDump($output) {
     if ($output[0] != '/') {
-      throw new TaskException($this,'Output must be an absolute path');
+      $output = getcwd() . '/' . $output;
     }
 
     $site = 'default';

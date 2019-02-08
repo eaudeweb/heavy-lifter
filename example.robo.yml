@@ -5,6 +5,7 @@ project:
       sync:
         username: username
         password: password
+        drupal_version: 8
         sql:
           url: https://srv.storage.com/sync/database.sql.gz
         files:

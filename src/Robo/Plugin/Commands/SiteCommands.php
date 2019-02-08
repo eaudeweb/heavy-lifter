@@ -48,12 +48,26 @@ class SiteCommands extends CommandBase {
       $this->taskExec($drush)->arg('user:password')->arg('--password=' . $newPassword)->arg($username)->run();
     }
 
-    $this->taskExec($drush)->arg('pm:enable')->arg('devel')->run();
-    $this->taskExec($drush)->arg('pm:enable')->arg('webprofiler')->run();
+    if ($this->configSite('sync.drupal_version') == 8) {
+      $this->taskExec($drush)->arg('pm:enable')->arg('devel')->run();
+      $this->taskExec($drush)->arg('pm:enable')->arg('webprofiler')->run();
+    } else { //Drupal 7
+      $this->taskExec($drush)->arg('pm-enable')->arg('devel')->dir('docroot')->run();
+      $this->taskExec($drush)->arg('pm-enable')->arg('webprofiler')->dir('docroot')->run();
+    }
 
     $root = $this->projectDir();
     if ($dev = realpath($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'dev')) {
-      $this->taskExec($drush)->arg('config:import')->arg('dev')->arg('--partial')->rawArg('-y')->run();
+      if ($this->configSite('sync.drupal_version') == 8) {
+        $this->taskExec($drush)
+          ->arg('config:import')
+          ->arg('dev')
+          ->arg('--partial')
+          ->rawArg('-y')
+          ->run();
+      } else { //Drupal 7
+        $this->yell("Skipping import of 'dev' profile because it's Drupal 7.");
+      }
     } else {
       $this->yell("Skipping import of 'dev' profile because it's missing");
     }
@@ -117,24 +131,56 @@ class SiteCommands extends CommandBase {
     $this->validateConfig();
     $drush = $this->drushExecutable();
 
-    $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
+    if ($this->configSite('sync.drupal_version') == 8) {
 
-    // Allow updatedb to fail once and execute it again after config:import.
-    $this->taskExec("{$drush} updatedb -y")->run();
+      $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
 
-    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
-    $execStack->exec("{$drush} cr");
-    if ($this->configSite('develop.config_split') === TRUE) {
-      $execStack->exec("{$drush} csim -y");
+      // Allow updatedb to fail once and execute it again after config:import.
+      $this->taskExec("{$drush} updatedb -y")->run();
+
+      $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+      $execStack->exec("{$drush} cr");
+      if ($this->configSite('develop.config_split') === TRUE) {
+        $execStack->exec("{$drush} csim -y");
+      }
+      else {
+        $execStack->exec("{$drush} cim sync -y");
+      }
+      $execStack->exec("{$drush} updatedb -y");
+      $execStack->exec("{$drush} locale:check");
+      $execStack->exec("{$drush} locale:update");
+      $execStack->exec("{$drush} cr");
+      $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
+
+    } else { // Drupal 7
+
+      // Put the site on maintenance mode
+      $this->taskExec($drush)
+        ->arg("vset")
+        ->arg("maintenance_mode")
+        ->arg("1")
+        ->dir('docroot')
+        ->run();
+
+      // Execute the update commands
+      $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+      $execStack->exec("{$drush} updatedb -y")->dir('docroot');
+
+      // The 'drush locale:check' and 'drush locale:update' don't have equivalents in Drupal 7
+
+      // Clear the cache
+      $execStack->exec("{$drush} cc all")->dir('docroot');
+
+      // Disable maintenance mode
+      $this->taskExec($drush)
+        ->arg("vset")
+        ->arg("maintenance_mode")
+        ->arg("0")
+        ->dir('docroot')
+        ->run();
+
     }
-    else {
-      $execStack->exec("{$drush} cim sync -y");
-    }
-    $execStack->exec("{$drush} updatedb -y");
-    $execStack->exec("{$drush} locale:check");
-    $execStack->exec("{$drush} locale:update");
-    $execStack->exec("{$drush} cr");
-    $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
+
     return $execStack->run();
   }
 
