@@ -2,7 +2,6 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
-use Robo\Result;
 use Robo\Robo;
 use Symfony\Component\Console\Output\NullOutput;
 
@@ -14,6 +13,7 @@ use Symfony\Component\Console\Output\NullOutput;
 class SiteCommands extends CommandBase {
 
   use \Boedah\Robo\Task\Drush\loadTasks;
+  use \EauDeWeb\Robo\Task\Curl\loadTasks;
 
   /**
    * @inheritdoc

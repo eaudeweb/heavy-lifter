@@ -3,12 +3,14 @@
 namespace EauDeWeb\Robo\Plugin\Commands;
 
 
+use EauDeWeb\Robo\Task\Curl\loadTasks;
 use Robo\Exception\TaskException;
 
 
 class SqlCommands extends CommandBase {
 
   use \Boedah\Robo\Task\Drush\loadTasks;
+  use \EauDeWeb\Robo\Task\Curl\loadTasks;
 
   /**
    * Download the database dump from the remote storage, without importing it.
