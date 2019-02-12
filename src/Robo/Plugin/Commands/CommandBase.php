@@ -5,7 +5,7 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
-use EauDeWeb\Robo\InvalidConfigurationException;
+use Robo\Exception\TaskException;
 use Robo\Robo;
 use Symfony\Component\Process\Process;
 
@@ -21,21 +21,36 @@ class CommandBase extends \Robo\Tasks {
   /**
    * Check configuration file consistency.
    *
-   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   * @throws \Robo\Exception\TaskException
    */
   protected function validateConfig() {
     $version = $this->config('project.version');
     if (empty($version)) {
-      throw new InvalidConfigurationException(
+      throw new TaskException(
+        $this,
         'Make sure robo.yml exists and configuration updated to format version: ' . static::FILE_FORMAT_VERSION
       );
     }
     if (!version_compare($version, static::FILE_FORMAT_VERSION, '>=')) {
-      throw new InvalidConfigurationException(
+      throw new TaskException(
+        $this,
         'Update your obsolete robo.yml configuration with changes from example.robo.yml to file format: ' . static::FILE_FORMAT_VERSION
       );
     }
     return TRUE;
+  }
+
+
+  /**
+   * Validate the URL is https
+   * @param string $url
+   *
+   * @throws \Robo\Exception\TaskException
+   */
+  protected function validateHttpsUrl($url) {
+    if (strpos($url, 'https://') !== 0) {
+      throw new TaskException($this, 'URL is not HTTPS: ' . $url);
+    }
   }
 
   /**
@@ -91,7 +106,7 @@ class CommandBase extends \Robo\Tasks {
    * Return absolute path to drush executable.
    *
    * @return string
-   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   * @throws \Robo\Exception\TaskException
    */
   protected function drushExecutable() {
     /** @TODO Windows / Windows+BASH / WinBash / Cygwind not tested */
@@ -101,14 +116,14 @@ class CommandBase extends \Robo\Tasks {
     else if (realpath(getcwd() . '/vendor/drush/drush/drush')) {
       realpath(getcwd() . '/vendor/drush/drush/drush');
     }
-    throw new InvalidConfigurationException('Cannot find Drush executable inside this project');
+    throw new TaskException($this, 'Cannot find Drush executable inside this project');
   }
 
   /**
    * Find Drupal root installation.
    *
    * @return string
-   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   * @throws \Robo\Exception\TaskException
    */
   protected function drupalRoot() {
     $drupalFinder = new \DrupalFinder\DrupalFinder();
@@ -116,7 +131,7 @@ class CommandBase extends \Robo\Tasks {
       return $drupalFinder->getDrupalRoot();
     }
     else {
-      throw new InvalidConfigurationException("Cannot find Drupal root installation folder");
+      throw new TaskException($this, "Cannot find Drupal root installation folder");
     }
   }
 
@@ -124,7 +139,7 @@ class CommandBase extends \Robo\Tasks {
   /**
    * Detect drush version.
    *
-   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   * @throws \Robo\Exception\TaskException
    */
   protected function getDrushVersion() {
     $drush = $this->drushExecutable();
@@ -150,7 +165,7 @@ class CommandBase extends \Robo\Tasks {
 
   /**
    * @return bool
-   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   * @throws \Robo\Exception\TaskException
    */
   protected function isDrush9() {
     $drushVersion = $this->getDrushVersion();

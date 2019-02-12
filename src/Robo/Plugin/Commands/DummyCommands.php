@@ -10,7 +10,7 @@ class DummyCommands extends CommandBase {
    *
    * @command do:nothing
    *
-   * @throws \EauDeWeb\Robo\InvalidConfigurationException
+   * @throws \Robo\Exception\TaskException
    */
   public function doNothing() {
     $this->validateConfig();

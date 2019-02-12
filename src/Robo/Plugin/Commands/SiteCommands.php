@@ -13,6 +13,8 @@ use Symfony\Component\Console\Output\NullOutput;
  */
 class SiteCommands extends CommandBase {
 
+  use \Boedah\Robo\Task\Drush\loadTasks;
+
   /**
    * @inheritdoc
    */
@@ -35,25 +37,75 @@ class SiteCommands extends CommandBase {
   public function siteDevelop($newPassword = 'password') {
     $this->validateConfig();
     $drush = $this->drushExecutable();
+    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
 
     // Reset admin password if available.
     $username = $this->configSite('develop.admin_username');
+    $modules = $this->configSite('develop.modules');
     if ($this->isDrush9()) {
-      $this->taskExec($drush)->arg('user:password')->arg($username)->arg($newPassword)->run();
+      $execStack->exec("$drush user:password $username $newPassword");
+      $execStack->exec("$drush config:import dev --partial -y");
+      if (!empty($modules)) {
+        foreach ($modules as $module) {
+          $execStack->exec("$drush pm:enable $module -y");
+        }
+      }
     }
     else {
-      $this->taskExec($drush)->arg('user:password')->arg('--password=' . $newPassword)->arg($username)->run();
+      $execStack->dir('docroot');
+      $execStack->exec("$drush user-password $username --password=$newPassword");
+      if (!empty($modules)) {
+        foreach ($modules as $module) {
+          $execStack->exec("$drush pm-enable $module -y");
+        }
+      }
     }
+    $execStack->run();
+  }
 
-    $this->taskExec($drush)->arg('pm:enable')->arg('devel')->run();
-    $this->taskExec($drush)->arg('pm:enable')->arg('webprofiler')->run();
+  /**
+   * @return \Robo\Result
+   * @throws \Robo\Exception\TaskException
+   */
+  public function siteInstall() {
+    $url =  $this->configSite('sync.sql.url');
+    $this->validateHttpsUrl($url);
 
-    $root = $this->projectDir();
-    if ($dev = realpath($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'dev')) {
-      $this->taskExec($drush)->arg('config:import')->arg('dev')->arg('--partial')->rawArg('-y')->run();
-    } else {
-      $this->yell("Skipping import of 'dev' profile because it's missing");
+    $dir = $this->taskTmpDir('heavy-lifter')->run();
+    $dest = $dir->getData()['path'] . '/database.sql';
+    $dest_gz = $dest . '.gz';
+
+    $url =  $this->configSite('sync.sql.url');
+    $username = $this->configSite('sync.username');
+    $password = $this->configSite('sync.password');
+    $this->validateHttpsUrl($url);
+    $download = $this->taskCurl($url)
+      ->followRedirects()
+      ->failOnHttpError()
+      ->locationTrusted()
+      ->output($dest_gz)
+      ->basicAuth($username, $password)
+      ->option('--create-dirs')
+      ->run();
+
+    if ($download->wasSuccessful()) {
+      $build = $this->collectionBuilder();
+      $build->addTask(
+        $this->taskExec('gzip')->option('-d')->arg($dest_gz)
+      );
+      $drush = $this->drushExecutable();
+      $drush = $this->taskDrushStack($drush)
+        ->drush('sql:drop')
+        ->drush(['sql:query','--file', $dest]);
+      $build->addTask($drush);
+      $sync = $build->run();
+      if ($sync->wasSuccessful()) {
+        return $this->siteUpdate();
+      }
+      return $sync;
     }
+    return $download;
+
   }
 
   /**
@@ -63,31 +115,47 @@ class SiteCommands extends CommandBase {
    * @command site:update
    *
    * @return null|\Robo\Result
-   * @throws \EauDeWeb\Robo\InvalidConfigurationException
    * @throws \Robo\Exception\TaskException
    */
   public function siteUpdate() {
     $this->validateConfig();
     $drush = $this->drushExecutable();
-
-    $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
-
-    // Allow updatedb to fail once and execute it again after config:import.
-    $this->taskExec("{$drush} updatedb -y")->run();
-
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
-    $execStack->exec("{$drush} cr");
-    if ($this->configSite('develop.config_split') === TRUE) {
-      $execStack->exec("{$drush} csim -y");
+
+    if ($this->isDrush9()) {
+      $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
+
+      // Allow updatedb to fail once and execute it again after config:import.
+      $this->taskExec("{$drush} updatedb -y")->run();
+
+      $execStack->exec("{$drush} cr");
+      if ($this->configSite('develop.config_split') === TRUE) {
+        $execStack->exec("{$drush} csim -y");
+      }
+      else {
+        $execStack->exec("{$drush} cim sync -y");
+      }
+      $execStack->exec("{$drush} updatedb -y");
+      $execStack->exec("{$drush} locale:check");
+      $execStack->exec("{$drush} locale:update");
+      $execStack->exec("{$drush} cr");
+      $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
+
     }
     else {
-      $execStack->exec("{$drush} cim sync -y");
+      // Drupal 7
+      $execStack->dir('docroot');
+      $execStack->exec("{$drush} vset maintenance_mode 1");
+      // Execute the update commands
+      $execStack->exec("{$drush} updatedb -y");
+
+      // The 'drush locale:check' and 'drush locale:update' don't have equivalents in Drupal 7
+
+      // Clear the cache
+      $execStack->exec("{$drush} cc all");
+      $execStack->exec("{$drush} vset maintenance_mode 0");
     }
-    $execStack->exec("{$drush} updatedb -y");
-    $execStack->exec("{$drush} locale:check");
-    $execStack->exec("{$drush} locale:update");
-    $execStack->exec("{$drush} cr");
-    $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
+
     return $execStack->run();
   }
 
