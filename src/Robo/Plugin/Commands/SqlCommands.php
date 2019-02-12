@@ -8,7 +8,6 @@ use Robo\Exception\TaskException;
 
 class SqlCommands extends CommandBase {
 
-  use \EauDeWeb\Robo\Task\Curl\loadTasks;
   use \Boedah\Robo\Task\Drush\loadTasks;
 
   /**
@@ -51,7 +50,7 @@ class SqlCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function sqlSync($options = ['anonymize' => FALSE]) {
-    $url =  $this->configSite('sync.sql.url');
+    $url = $this->configSite('sync.sql.url');
     $this->validateHttpsUrl($url);
 
     $dir = $this->taskTmpDir('heavy-lifter')->run();
@@ -59,34 +58,27 @@ class SqlCommands extends CommandBase {
     $dest_gz = $dest . '.gz';
     $download = $this->sqlDownload($dest_gz);
     if ($download->wasSuccessful()) {
-      $build = $this->collectionBuilder();
-      $build->addTask(
-        $this->taskExec('gzip')->option('-d')->arg($dest_gz)
-      );
       $drush = $this->drushExecutable();
+      $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+      $execStack->exec("gzip -d $dest_gz");
 
-      if ($this->configSite('sync.drupal_version') == 8) {
-        // Create the sql drush command
-        $drush = $this->taskDrushStack($drush)
-          ->drush('sql:drop')
-          ->drush(['sql:query','--file', $dest]);
-
-      } else { //Drupal 7
-        // Create the sql drush command
-        $drush = $this->taskDrushStack($drush)
-          ->drush('sql-drop')
-          ->drush(['sql-query', '--file=' . $dest])
-          ->dir('docroot');
-
+      if ($this->isDrush9()) {
+        $execStack->exec("$drush sql:drop");
+        $execStack->exec("$drush sql:query --file $dest");
+      }
+      else {
+        //Drupal 7
+        $execStack->dir('docroot');
+        $execStack->exec("$drush sql-drop");
+        $execStack->exec("$drush sql-query --file $dest");
       }
 
       // Add the anonymize command if required
       if ($options['anonymize']) {
-        $drush->drush("project:anonymize -y");
+        $execStack->exec("$drush project:anonymize -y");
       }
 
-      $build->addTask($drush);
-      return $build->run();
+      $execStack->run();
     }
     return $download;
   }
@@ -103,13 +95,17 @@ class SqlCommands extends CommandBase {
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
    */
-  public function sqlDump($output, $options = ['gzip' => true]) {
+  public function sqlDump($output = NULL, $options = ['gzip' => true]) {
+    if (empty($output)) {
+      $output = $this->configSite('default_dump_location');
+    }
     $output = preg_replace('/.gz$/', '', $output);
     if ($output[0] != '/') {
       $output = getcwd() . '/' . $output;
     }
     $drush = $this->drushExecutable();
-    if ($this->configSite('sync.drupal_version') == 8) {
+    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+    if ($this->isDrush9()) {
       $task = $this->taskExec($drush)
         ->rawArg('sql:dump')
         ->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history');

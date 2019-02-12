@@ -13,7 +13,6 @@ use Symfony\Component\Console\Output\NullOutput;
  */
 class SiteCommands extends CommandBase {
 
-  use \EauDeWeb\Robo\Task\Curl\loadTasks;
   use \Boedah\Robo\Task\Drush\loadTasks;
 
   /**
@@ -38,39 +37,30 @@ class SiteCommands extends CommandBase {
   public function siteDevelop($newPassword = 'password') {
     $this->validateConfig();
     $drush = $this->drushExecutable();
+    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
 
     // Reset admin password if available.
     $username = $this->configSite('develop.admin_username');
+    $modules = $this->configSite('develop.modules');
     if ($this->isDrush9()) {
-      $this->taskExec($drush)->arg('user:password')->arg($username)->arg($newPassword)->run();
+      $execStack->exec("$drush user:password $username $newPassword");
+      $execStack->exec("$drush config:import dev --partial -y");
+      if (!empty($modules)) {
+        foreach ($modules as $module) {
+          $execStack->exec("$drush pm:enable $module -y");
+        }
+      }
     }
     else {
-      $this->taskExec($drush)->arg('user:password')->arg('--password=' . $newPassword)->arg($username)->run();
-    }
-
-    if ($this->configSite('sync.drupal_version') == 8) {
-      $this->taskExec($drush)->arg('pm:enable')->arg('devel')->run();
-      $this->taskExec($drush)->arg('pm:enable')->arg('webprofiler')->run();
-    } else { //Drupal 7
-      $this->taskExec($drush)->arg('pm-enable')->arg('devel')->dir('docroot')->run();
-      $this->taskExec($drush)->arg('pm-enable')->arg('webprofiler')->dir('docroot')->run();
-    }
-
-    $root = $this->projectDir();
-    if ($dev = realpath($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'dev')) {
-      if ($this->configSite('sync.drupal_version') == 8) {
-        $this->taskExec($drush)
-          ->arg('config:import')
-          ->arg('dev')
-          ->arg('--partial')
-          ->rawArg('-y')
-          ->run();
-      } else { //Drupal 7
-        $this->yell("Skipping import of 'dev' profile because it's Drupal 7.");
+      $execStack->dir('docroot');
+      $execStack->exec("$drush user-password $username --password=$newPassword");
+      if (!empty($modules)) {
+        foreach ($modules as $module) {
+          $execStack->exec("$drush pm-enable $module -y");
+        }
       }
-    } else {
-      $this->yell("Skipping import of 'dev' profile because it's missing");
     }
+    $execStack->run();
   }
 
   /**
@@ -130,15 +120,14 @@ class SiteCommands extends CommandBase {
   public function siteUpdate() {
     $this->validateConfig();
     $drush = $this->drushExecutable();
+    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
 
-    if ($this->configSite('sync.drupal_version') == 8) {
-
+    if ($this->isDrush9()) {
       $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
 
       // Allow updatedb to fail once and execute it again after config:import.
       $this->taskExec("{$drush} updatedb -y")->run();
 
-      $execStack = $this->taskExecStack()->stopOnFail(TRUE);
       $execStack->exec("{$drush} cr");
       if ($this->configSite('develop.config_split') === TRUE) {
         $execStack->exec("{$drush} csim -y");
@@ -152,33 +141,19 @@ class SiteCommands extends CommandBase {
       $execStack->exec("{$drush} cr");
       $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
 
-    } else { // Drupal 7
-
-      // Put the site on maintenance mode
-      $this->taskExec($drush)
-        ->arg("vset")
-        ->arg("maintenance_mode")
-        ->arg("1")
-        ->dir('docroot')
-        ->run();
-
+    }
+    else {
+      // Drupal 7
+      $execStack->dir('docroot');
+      $execStack->exec("{$drush} vset maintenance_mode 1");
       // Execute the update commands
-      $execStack = $this->taskExecStack()->stopOnFail(TRUE);
-      $execStack->exec("{$drush} updatedb -y")->dir('docroot');
+      $execStack->exec("{$drush} updatedb -y");
 
       // The 'drush locale:check' and 'drush locale:update' don't have equivalents in Drupal 7
 
       // Clear the cache
-      $execStack->exec("{$drush} cc all")->dir('docroot');
-
-      // Disable maintenance mode
-      $this->taskExec($drush)
-        ->arg("vset")
-        ->arg("maintenance_mode")
-        ->arg("0")
-        ->dir('docroot')
-        ->run();
-
+      $execStack->exec("{$drush} cc all");
+      $execStack->exec("{$drush} vset maintenance_mode 0");
     }
 
     return $execStack->run();

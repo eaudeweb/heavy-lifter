@@ -1,11 +1,12 @@
 project:
-  version: "2.1"
+  version: "2.2"
   sites:
     default:
+      drupal_version: 8
+      default_dump_location: web/sync/database.sql
       sync:
         username: username
         password: password
-        drupal_version: 8
         sql:
           url: https://srv.storage.com/sync/database.sql.gz
         files:
@@ -13,3 +14,5 @@ project:
       develop:
         admin_username: user@mail.com
         config_split: FALSE
+        modules:
+          - devel
