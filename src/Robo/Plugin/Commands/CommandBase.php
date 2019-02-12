@@ -16,7 +16,7 @@ use Symfony\Component\Process\Process;
  */
 class CommandBase extends \Robo\Tasks {
 
-  const FILE_FORMAT_VERSION = '2.1';
+  const FILE_FORMAT_VERSION = '2.2';
 
   /**
    * Check configuration file consistency.
