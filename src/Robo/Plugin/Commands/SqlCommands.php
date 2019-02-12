@@ -65,13 +65,13 @@ class SqlCommands extends CommandBase {
       $execStack->exec("gzip -d $dest_gz");
 
       if ($this->isDrush9()) {
-        $execStack->exec("$drush sql:drop");
+        $execStack->exec("$drush sql:drop -y");
         $execStack->exec("$drush sql:query --file $dest");
       }
       else {
         //Drupal 7
         $execStack->dir('docroot');
-        $execStack->exec("$drush sql-drop");
+        $execStack->exec("$drush sql-drop -y");
         $execStack->exec("$drush sql-query --file $dest");
       }
 
