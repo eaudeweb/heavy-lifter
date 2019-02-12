@@ -44,7 +44,15 @@ class SiteCommands extends CommandBase {
     $modules = $this->configSite('develop.modules');
     if ($this->isDrush9()) {
       $execStack->exec("$drush user:password $username $newPassword");
-      $execStack->exec("$drush config:import dev --partial -y");
+
+      $root = $this->projectDir();
+      if ($dev = realpath($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'dev')) {
+        $execStack->exec("$drush config:import dev --partial -y");
+      }
+      else {
+        $this->yell("Skipping import of 'dev' profile because it's missing");
+      }
+
       if (!empty($modules)) {
         foreach ($modules as $module) {
           $execStack->exec("$drush pm:enable $module -y");
