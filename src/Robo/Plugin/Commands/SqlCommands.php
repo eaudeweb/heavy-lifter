@@ -72,7 +72,7 @@ class SqlCommands extends CommandBase {
         //Drupal 7
         $execStack->dir('docroot');
         $execStack->exec("$drush sql-drop -y");
-        $execStack->exec("$drush sql-query --file $dest");
+        $execStack->exec("$drush sql-query --file=$dest");
       }
 
       // Add the anonymize command if required
