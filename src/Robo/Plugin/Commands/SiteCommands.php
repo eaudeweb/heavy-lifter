@@ -144,8 +144,12 @@ class SiteCommands extends CommandBase {
         $execStack->exec("{$drush} cim sync -y");
       }
       $execStack->exec("{$drush} updatedb -y");
-      $execStack->exec("{$drush} locale:check");
-      $execStack->exec("{$drush} locale:update");
+
+      if ($this->isModuleEnabled('locale')) {
+        $execStack->exec("{$drush} locale:check");
+        $execStack->exec("{$drush} locale:update");
+      }
+
       $execStack->exec("{$drush} cr");
       $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
 
