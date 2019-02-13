@@ -172,6 +172,10 @@ class CommandBase extends \Robo\Tasks {
     return version_compare($drushVersion, '9') >= 0;
   }
 
+  /**
+   * @param $module
+   * @return bool
+   */
   protected function isModuleEnabled($module) {
     $drush = $this->drushExecutable();
     $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
