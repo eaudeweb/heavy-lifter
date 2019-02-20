@@ -68,6 +68,8 @@ class SiteCommands extends CommandBase {
         }
       }
     }
+
+    $this->addDrushScriptsToExecStack($execStack, 'develop');
     $execStack->run();
   }
 

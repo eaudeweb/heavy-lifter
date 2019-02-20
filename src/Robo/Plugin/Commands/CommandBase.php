@@ -5,8 +5,10 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
+use Robo\Collection\CollectionBuilder;
 use Robo\Exception\TaskException;
 use Robo\Robo;
+use Robo\Task\Base\ExecStack;
 use Symfony\Component\Process\Process;
 
 /**
@@ -181,6 +183,34 @@ class CommandBase extends \Robo\Tasks {
     $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
     $p->run();
     return !empty($p->getOutput());
+  }
+
+  /**
+   * @param CollectionBuilder $execStack
+   * @param $phase
+   */
+  protected function addDrushScriptsToExecStack(CollectionBuilder $execStack, $phase) {
+    $drush = $this->drushExecutable();
+    $drupal = $this->isDrush9() ? 'drupal8' : 'drupal7';
+
+    $script_paths = [
+      realpath(__DIR__ . "/../../../../etc/scripts/{$drupal}/{$phase}"),
+      realpath(getcwd() . "/etc/scripts/{$phase}"),
+    ];
+
+    foreach ($script_paths as $path) {
+      if (!file_exists($path)) {
+        continue;
+      }
+      $scripts = scandir($path);
+      foreach ($scripts as $idx => $script) {
+        $extension = pathinfo($script, PATHINFO_EXTENSION);
+        if ($extension != 'php') {
+          continue;
+        }
+        $execStack->exec("$drush scr $path/$script");
+      }
+    }
   }
 
 }
