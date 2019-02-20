@@ -8,7 +8,6 @@ namespace EauDeWeb\Robo\Plugin\Commands;
 use Robo\Collection\CollectionBuilder;
 use Robo\Exception\TaskException;
 use Robo\Robo;
-use Robo\Task\Base\ExecStack;
 use Symfony\Component\Process\Process;
 
 /**
