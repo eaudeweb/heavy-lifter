@@ -20,10 +20,6 @@ class SiteCommands extends CommandBase {
    */
   protected function validateConfig() {
     parent::validateConfig();
-    $username =  $this->configSite('develop.admin_username');
-    if (empty($username)) {
-      $this->yell('project.sites.default.develop.admin_username not set, password will not be reset');
-    }
   }
 
   /**
@@ -41,9 +37,14 @@ class SiteCommands extends CommandBase {
 
     // Reset admin password if available.
     $username = $this->configSite('develop.admin_username');
+    if (empty($username)) {
+      $this->yell('project.sites.default.develop.admin_username not set, password will not be reset');
+    }
     $modules = $this->configSite('develop.modules');
     if ($this->isDrush9()) {
-      $execStack->exec("$drush user:password $username $newPassword");
+      if (!empty($username)) {
+        $execStack->exec("$drush user:password $username $newPassword");
+      }
 
       $root = $this->projectDir();
       if ($dev = realpath($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'dev')) {
@@ -61,7 +62,9 @@ class SiteCommands extends CommandBase {
     }
     else {
       $execStack->dir('docroot');
-      $execStack->exec("$drush user-password $username --password=$newPassword");
+      if (!empty($username)) {
+        $execStack->exec("$drush user-password $username --password=$newPassword");
+      }
       if (!empty($modules)) {
         foreach ($modules as $module) {
           $execStack->exec("$drush pm-enable $module -y");
