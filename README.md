@@ -22,3 +22,8 @@ The robo commands and guidelines are similar to the ones on Drupal 8, just a few
 * Get the database dump and import: `./vendor/bin/robo sql:sync`
 * Get the files archive: `./vendor/bin/robo files:sync`
 * Enable development: `./vendor/bin/robo site:develop`
+
+## Custom development scripts
+
+If you want to run custom drush scripts at the end of the site:develop command, add these script in the PROJECT/etc/scripts/develop folder.
+
