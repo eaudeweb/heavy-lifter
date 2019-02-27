@@ -25,7 +25,7 @@ class SqlCommands extends CommandBase {
    *
    */
   public function sqlDownload($destination) {
-    $url =  $this->configSite('sync.sql.url');
+    $url =  $this->configSite('sql.sync.source');
     $username = $this->configSite('sync.username');
     $password = $this->configSite('sync.password');
     $this->validateHttpsUrl($url);
@@ -52,7 +52,7 @@ class SqlCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function sqlSync($options = ['anonymize' => FALSE]) {
-    $url = $this->configSite('sync.sql.url');
+    $url = $this->configSite('sql.sync.source');
     $this->validateHttpsUrl($url);
 
     $dir = $this->taskTmpDir('heavy-lifter')->run();
@@ -99,7 +99,7 @@ class SqlCommands extends CommandBase {
    */
   public function sqlDump($output = NULL, $options = ['gzip' => true]) {
     if (empty($output)) {
-      $output = $this->configSite('default_dump_location');
+      $output = $this->configSite('files.dump.location');
       if (empty($output)) {
         throw new TaskException(get_class($this), 'Dump location was not set. Please add the path parameter or add default_dump_location in your robo.yml.');
       }

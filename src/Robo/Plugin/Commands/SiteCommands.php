@@ -36,11 +36,11 @@ class SiteCommands extends CommandBase {
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
 
     // Reset admin password if available.
-    $username = $this->configSite('develop.admin_username');
+    $username = $this->configSite('site.develop.admin_username');
     if (empty($username)) {
-      $this->yell('project.sites.default.develop.admin_username not set, password will not be reset');
+      $this->yell('sites.default.site.develop.admin_username not set, password will not be reset');
     }
-    $modules = $this->configSite('develop.modules');
+    $modules = $this->configSite('site.develop.modules');
     if ($this->isDrush9()) {
       if (!empty($username)) {
         $execStack->exec("$drush user:password $username $newPassword");
@@ -81,14 +81,14 @@ class SiteCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function siteInstall() {
-    $url =  $this->configSite('sync.sql.url');
+    $url =  $this->configSite('sql.sync.source');
     $this->validateHttpsUrl($url);
 
     $dir = $this->taskTmpDir('heavy-lifter')->run();
     $dest = $dir->getData()['path'] . '/database.sql';
     $dest_gz = $dest . '.gz';
 
-    $url =  $this->configSite('sync.sql.url');
+    $url =  $this->configSite('sql.sync.source');
     $username = $this->configSite('sync.username');
     $password = $this->configSite('sync.password');
     $this->validateHttpsUrl($url);
