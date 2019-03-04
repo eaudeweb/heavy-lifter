@@ -212,4 +212,35 @@ class CommandBase extends \Robo\Tasks {
     }
   }
 
+  /**
+   * Update the drush execution stack according to robo.yml specifications.
+   */
+  protected function updateDrushCommandStack($execStack, $commands, $excludedCommandsArray = [], $extraCommandsArray = []) {
+    if (empty($excludedCommandsArray)) {
+      $excludedCommandsArray = [];
+    }
+    if (empty($extraCommandsArray)) {
+      $extraCommandsArray = [];
+    }
+
+    $excludedCommands = '';
+    foreach ($excludedCommandsArray as $command) {
+      $excludedCommands .= ' ' . $command . ' |';
+    }
+
+    $drush = $this->drushExecutable();
+    foreach ($commands as $command) {
+      $rawCommand = preg_split('/\s/', $command);
+      if (!preg_match('/' . reset($rawCommand) . '\s\|/', $excludedCommands)) {
+        $execStack->exec("{$drush} " . $command);
+      }
+    }
+
+    foreach ($extraCommandsArray as $extraCommand) {
+      $execStack->exec("{$drush} " . $extraCommand);
+    }
+
+    return $execStack;
+  }
+
 }

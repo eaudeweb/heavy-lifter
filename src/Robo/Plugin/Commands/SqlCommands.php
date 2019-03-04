@@ -54,6 +54,7 @@ class SqlCommands extends CommandBase {
   public function sqlSync($options = ['anonymize' => FALSE]) {
     $url = $this->configSite('sql.sync.source');
     $this->validateHttpsUrl($url);
+    $commands = [];
 
     $dir = $this->taskTmpDir('heavy-lifter')->run();
     $dest = $dir->getData()['path'] . '/database.sql';
@@ -65,20 +66,25 @@ class SqlCommands extends CommandBase {
       $execStack->exec("gzip -d $dest_gz");
 
       if ($this->isDrush9()) {
-        $execStack->exec("$drush sql:drop -y");
-        $execStack->exec("$drush sql:query --file $dest");
+        $commands[] = 'sql:drop -y';
+        $commands[] = 'sql:query --file ' . $dest;
       }
       else {
         //Drupal 7
         $execStack->dir('docroot');
-        $execStack->exec("$drush sql-drop -y");
-        $execStack->exec("$drush sql-query --file=$dest");
+        $commands[] = 'sql-drop -y';
+        $commands[] = 'sql-query --file=' . $dest;
       }
 
       // Add the anonymize command if required
       if ($options['anonymize']) {
-        $execStack->exec("$drush project:anonymize -y");
+        $commands[] = 'project:anonymize -y';
       }
+
+      $excludedCommandsArray = $this->configSite('sql.sync.excluded_commands');
+      $extraCommandsArray = $this->configSite('sql.sync.extra_commands');
+
+      $execStack = $this->updateDrushCommandStack($execStack, $commands, $excludedCommandsArray, $extraCommandsArray);
 
       $execStack->run();
     }
