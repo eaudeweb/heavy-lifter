@@ -105,7 +105,7 @@ class SqlCommands extends CommandBase {
    */
   public function sqlDump($output = NULL, $options = ['gzip' => true]) {
     if (empty($output)) {
-      $output = $this->configSite('files.dump.location');
+      $output = $this->configSite('sql.dump.location');
       if (empty($output)) {
         throw new TaskException(get_class($this), 'Dump location was not set. Please add the path parameter or add default_dump_location in your robo.yml.');
       }

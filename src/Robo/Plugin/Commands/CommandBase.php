@@ -223,15 +223,11 @@ class CommandBase extends \Robo\Tasks {
       $extraCommandsArray = [];
     }
 
-    $excludedCommands = '';
-    foreach ($excludedCommandsArray as $command) {
-      $excludedCommands .= ' ' . $command . ' |';
-    }
+    $excludedCommands = implode("|", $excludedCommandsArray);
 
     $drush = $this->drushExecutable();
     foreach ($commands as $command) {
-      $rawCommand = preg_split('/\s/', $command);
-      if (!preg_match('/' . reset($rawCommand) . '\s\|/', $excludedCommands)) {
+      if (!preg_match('/\b' . $excludedCommands . '\b/', $command)) {
         $execStack->exec("{$drush} " . $command);
       }
     }

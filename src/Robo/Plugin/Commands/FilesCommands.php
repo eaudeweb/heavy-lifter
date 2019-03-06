@@ -66,14 +66,17 @@ class FilesCommands extends CommandBase {
   /**
    * Create archive with files directory to the given path.
    *
-   * @param string $output Absolute path to the resulting archive
-   *
    * @command files:archive
    *
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
    */
-  public function filesDump($output) {
+  public function filesDump($output = '') {
+
+    if (empty($output)) {
+      $output = $this->configSite('files.dump.location');
+    }
+
     if ($output[0] != '/') {
       $output = getcwd() . '/' . $output;
     }
