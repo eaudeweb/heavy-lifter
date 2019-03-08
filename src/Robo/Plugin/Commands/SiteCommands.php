@@ -148,7 +148,7 @@ class SiteCommands extends CommandBase {
       $this->taskExec("{$drush} updatedb -y")->run();
 
       $commands[] = 'cache:rebuild';
-      if ($this->configSite('develop.config_split') === TRUE) {
+      if ($this->configSite('site.develop.config_split') === TRUE) {
         $commands[] = 'config-split-import -y';
       }
       else {

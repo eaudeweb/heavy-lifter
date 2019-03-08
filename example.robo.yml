@@ -28,4 +28,3 @@ sites:
         modules:
           - devel
           - webprofiler
-          - simpletest

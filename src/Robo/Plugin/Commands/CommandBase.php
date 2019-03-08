@@ -227,7 +227,7 @@ class CommandBase extends \Robo\Tasks {
 
     $drush = $this->drushExecutable();
     foreach ($commands as $command) {
-      if (!preg_match('/\b' . $excludedCommands . '\b/', $command)) {
+      if (!preg_match('/\b(' . $excludedCommands . ')\b/', $command)) {
         $execStack->exec("{$drush} " . $command);
       }
     }
