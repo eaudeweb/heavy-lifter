@@ -17,7 +17,7 @@ use Symfony\Component\Process\Process;
  */
 class CommandBase extends \Robo\Tasks {
 
-  const FILE_FORMAT_VERSION = '2.2';
+  const FILE_FORMAT_VERSION = '3.0';
 
   /**
    * Check configuration file consistency.
@@ -25,7 +25,7 @@ class CommandBase extends \Robo\Tasks {
    * @throws \Robo\Exception\TaskException
    */
   protected function validateConfig() {
-    $version = $this->config('project.version');
+    $version = $this->config('version');
     if (empty($version)) {
       throw new TaskException(
         $this,
@@ -77,7 +77,7 @@ class CommandBase extends \Robo\Tasks {
    */
   protected function configSite($key, $site = 'default') {
     $config = Robo::config();
-    $full = 'project.sites.' . $site . '.' . $key;
+    $full = 'sites.' . $site . '.' . $key;
     $value = $config->get($full);
     if ($value === NULL) {
       $this->yell('Missing configuration key: ' . $full);
@@ -210,6 +210,33 @@ class CommandBase extends \Robo\Tasks {
         $execStack->exec("$drush scr $path/$script");
       }
     }
+  }
+
+  /**
+   * Update the drush execution stack according to robo.yml specifications.
+   */
+  protected function updateDrushCommandStack($execStack, $commands, $excludedCommandsArray = [], $extraCommandsArray = []) {
+    if (empty($excludedCommandsArray)) {
+      $excludedCommandsArray = [];
+    }
+    if (empty($extraCommandsArray)) {
+      $extraCommandsArray = [];
+    }
+
+    $excludedCommands = implode("|", $excludedCommandsArray);
+
+    $drush = $this->drushExecutable();
+    foreach ($commands as $command) {
+      if (!preg_match('/\b(' . $excludedCommands . ')\b/', $command)) {
+        $execStack->exec("{$drush} " . $command);
+      }
+    }
+
+    foreach ($extraCommandsArray as $extraCommand) {
+      $execStack->exec("{$drush} " . $extraCommand);
+    }
+
+    return $execStack;
   }
 
 }

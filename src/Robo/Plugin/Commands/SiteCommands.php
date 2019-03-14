@@ -34,21 +34,22 @@ class SiteCommands extends CommandBase {
     $this->validateConfig();
     $drush = $this->drushExecutable();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+    $commands = [];
 
     // Reset admin password if available.
-    $username = $this->configSite('develop.admin_username');
+    $username = $this->configSite('site.develop.admin_username');
     if (empty($username)) {
-      $this->yell('project.sites.default.develop.admin_username not set, password will not be reset');
+      $this->yell('sites.default.site.develop.admin_username not set, password will not be reset');
     }
-    $modules = $this->configSite('develop.modules');
+    $modules = $this->configSite('site.develop.modules');
     if ($this->isDrush9()) {
       if (!empty($username)) {
-        $execStack->exec("$drush user:password $username $newPassword");
+        $commands[] = 'user:password ' . $username . ' ' . $newPassword;
       }
 
       $root = $this->projectDir();
       if ($dev = realpath($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'dev')) {
-        $execStack->exec("$drush config:import dev --partial -y");
+        $commands[] = 'config:import dev --partial -y';
       }
       else {
         $this->yell("Skipping import of 'dev' profile because it's missing");
@@ -56,22 +57,26 @@ class SiteCommands extends CommandBase {
 
       if (!empty($modules)) {
         foreach ($modules as $module) {
-          $execStack->exec("$drush pm:enable $module -y");
+          $commands[] = 'pm:enable ' . $module . ' -y';
         }
       }
     }
     else {
       $execStack->dir('docroot');
       if (!empty($username)) {
-        $execStack->exec("$drush user-password $username --password=$newPassword");
+        $commands[] = 'user-password ' . $username . ' --password=' . $newPassword;
       }
       if (!empty($modules)) {
         foreach ($modules as $module) {
-          $execStack->exec("$drush pm-enable $module -y");
+          $commands[] = 'pm-enable ' . $module . ' -y';
         }
       }
     }
 
+    $excludedCommandsArray = $this->configSite('site.develop.excluded_commands');
+    $extraCommandsArray = $this->configSite('site.develop.extra_commands');
+
+    $execStack = $this->updateDrushCommandStack($execStack, $commands, $excludedCommandsArray, $extraCommandsArray);
     $this->addDrushScriptsToExecStack($execStack, 'develop');
     $execStack->run();
   }
@@ -81,14 +86,14 @@ class SiteCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function siteInstall() {
-    $url =  $this->configSite('sync.sql.url');
+    $url =  $this->configSite('sql.sync.source');
     $this->validateHttpsUrl($url);
 
     $dir = $this->taskTmpDir('heavy-lifter')->run();
     $dest = $dir->getData()['path'] . '/database.sql';
     $dest_gz = $dest . '.gz';
 
-    $url =  $this->configSite('sync.sql.url');
+    $url =  $this->configSite('sql.sync.source');
     $username = $this->configSite('sync.username');
     $password = $this->configSite('sync.password');
     $this->validateHttpsUrl($url);
@@ -134,6 +139,7 @@ class SiteCommands extends CommandBase {
     $this->validateConfig();
     $drush = $this->drushExecutable();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+    $commands = [];
 
     if ($this->isDrush9()) {
       $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
@@ -141,37 +147,42 @@ class SiteCommands extends CommandBase {
       // Allow updatedb to fail once and execute it again after config:import.
       $this->taskExec("{$drush} updatedb -y")->run();
 
-      $execStack->exec("{$drush} cr");
-      if ($this->configSite('develop.config_split') === TRUE) {
-        $execStack->exec("{$drush} csim -y");
+      $commands[] = 'cache:rebuild';
+      if ($this->configSite('site.develop.config_split') === TRUE) {
+        $commands[] = 'config-split-import -y';
       }
       else {
-        $execStack->exec("{$drush} cim sync -y");
+        $commands[] = 'config-import -y';
       }
-      $execStack->exec("{$drush} updatedb -y");
+      $commands[] = 'updatedb -y';
 
       if ($this->isModuleEnabled('locale')) {
-        $execStack->exec("{$drush} locale:check");
-        $execStack->exec("{$drush} locale:update");
+        $commands[] = 'locale:check';
+        $commands[] = 'locale:update';
       }
 
-      $execStack->exec("{$drush} cr");
-      $execStack->exec("{$drush} state-set system.maintenance_mode FALSE");
+      $commands[] = 'cache:rebuild';
+      $commands[] = 'state-set system.maintenance_mode FALSE';
 
     }
     else {
       // Drupal 7
       $execStack->dir('docroot');
-      $execStack->exec("{$drush} vset maintenance_mode 1");
+      $commands[] = 'vset maintenance_mode 1';
       // Execute the update commands
-      $execStack->exec("{$drush} updatedb -y");
+      $commands[] = 'updatedb -y';
 
       // The 'drush locale:check' and 'drush locale:update' don't have equivalents in Drupal 7
 
       // Clear the cache
-      $execStack->exec("{$drush} cc all");
-      $execStack->exec("{$drush} vset maintenance_mode 0");
+      $commands[] = 'cc all';
+      $commands[] = 'vset maintenance_mode 0';
     }
+
+    $excludedCommandsArray = $this->configSite('site.update.excluded_commands');
+    $extraCommandsArray = $this->configSite('site.update.extra_commands');
+
+    $execStack = $this->updateDrushCommandStack($execStack, $commands, $excludedCommandsArray, $extraCommandsArray);
 
     return $execStack->run();
   }

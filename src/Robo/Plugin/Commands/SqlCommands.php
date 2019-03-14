@@ -25,7 +25,7 @@ class SqlCommands extends CommandBase {
    *
    */
   public function sqlDownload($destination) {
-    $url =  $this->configSite('sync.sql.url');
+    $url =  $this->configSite('sql.sync.source');
     $username = $this->configSite('sync.username');
     $password = $this->configSite('sync.password');
     $this->validateHttpsUrl($url);
@@ -52,8 +52,9 @@ class SqlCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function sqlSync($options = ['anonymize' => FALSE]) {
-    $url = $this->configSite('sync.sql.url');
+    $url = $this->configSite('sql.sync.source');
     $this->validateHttpsUrl($url);
+    $commands = [];
 
     $dir = $this->taskTmpDir('heavy-lifter')->run();
     $dest = $dir->getData()['path'] . '/database.sql';
@@ -65,20 +66,25 @@ class SqlCommands extends CommandBase {
       $execStack->exec("gzip -d $dest_gz");
 
       if ($this->isDrush9()) {
-        $execStack->exec("$drush sql:drop -y");
-        $execStack->exec("$drush sql:query --file $dest");
+        $commands[] = 'sql:drop -y';
+        $commands[] = 'sql:query --file ' . $dest;
       }
       else {
         //Drupal 7
         $execStack->dir('docroot');
-        $execStack->exec("$drush sql-drop -y");
-        $execStack->exec("$drush sql-query --file=$dest");
+        $commands[] = 'sql-drop -y';
+        $commands[] = 'sql-query --file=' . $dest;
       }
 
       // Add the anonymize command if required
       if ($options['anonymize']) {
-        $execStack->exec("$drush project:anonymize -y");
+        $commands[] = 'project:anonymize -y';
       }
+
+      $excludedCommandsArray = $this->configSite('sql.sync.excluded_commands');
+      $extraCommandsArray = $this->configSite('sql.sync.extra_commands');
+
+      $execStack = $this->updateDrushCommandStack($execStack, $commands, $excludedCommandsArray, $extraCommandsArray);
 
       $execStack->run();
     }
@@ -99,7 +105,7 @@ class SqlCommands extends CommandBase {
    */
   public function sqlDump($output = NULL, $options = ['gzip' => true]) {
     if (empty($output)) {
-      $output = $this->configSite('default_dump_location');
+      $output = $this->configSite('sql.dump.location');
       if (empty($output)) {
         throw new TaskException(get_class($this), 'Dump location was not set. Please add the path parameter or add default_dump_location in your robo.yml.');
       }
