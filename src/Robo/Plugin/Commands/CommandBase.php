@@ -216,24 +216,28 @@ class CommandBase extends \Robo\Tasks {
    * Update the drush execution stack according to robo.yml specifications.
    */
   protected function updateDrushCommandStack($execStack, $commands, $excludedCommandsArray = [], $extraCommandsArray = []) {
-    if (empty($excludedCommandsArray)) {
-      $excludedCommandsArray = [];
-    }
-    if (empty($extraCommandsArray)) {
-      $extraCommandsArray = [];
-    }
-
-    $excludedCommands = implode("|", $excludedCommandsArray);
-
     $drush = $this->drushExecutable();
-    foreach ($commands as $command) {
-      if (!preg_match('/\b(' . $excludedCommands . ')\b/', $command)) {
-        $execStack->exec("{$drush} " . $command);
+
+    if (!empty($excludedCommandsArray)) {
+      $excludedCommands = implode("|", $excludedCommandsArray);
+
+      foreach ($commands as $command) {
+        if (preg_match('/\b(' . $excludedCommands . ')\b/', $command)) {
+          $index = array_search($command, $commands);
+          if($index !== false){
+            unset($commands[$index]);
+          }
+        }
       }
     }
 
-    foreach ($extraCommandsArray as $extraCommand) {
-      $execStack->exec("{$drush} " . $extraCommand);
+    if (empty($extraCommandsArray)) {
+      $extraCommandsArray = [];
+    }
+    $commands = array_merge($commands, $extraCommandsArray);
+
+    foreach ($commands as $command) {
+      $execStack->exec("{$drush} " . $command);
     }
 
     return $execStack;
