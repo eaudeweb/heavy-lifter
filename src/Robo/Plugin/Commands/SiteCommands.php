@@ -142,10 +142,10 @@ class SiteCommands extends CommandBase {
     $commands = [];
 
     if ($this->isDrush9()) {
-      $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
+      $commands[] = "state-set system.maintenance_mode TRUE";
 
       // Allow updatedb to fail once and execute it again after config:import.
-      $this->taskExec("{$drush} updatedb -y")->run();
+      $commands[] = "updatedb -y";
 
       $commands[] = 'cache:rebuild';
       if ($this->configSite('site.develop.config_split') === TRUE) {
