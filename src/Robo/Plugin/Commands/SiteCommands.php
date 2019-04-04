@@ -138,14 +138,15 @@ class SiteCommands extends CommandBase {
   public function siteUpdate() {
     $this->validateConfig();
     $drush = $this->drushExecutable();
-    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $commands = [];
 
     if ($this->isDrush9()) {
       $commands[] = "state-set system.maintenance_mode TRUE";
 
       // Allow updatedb to fail once and execute it again after config:import.
-      $commands[] = "updatedb -y";
+      $this->taskExec("{$drush} updatedb -y")->run();
+
+      $execStack = $this->taskExecStack()->stopOnFail(TRUE);
 
       $commands[] = 'cache:rebuild';
       if ($this->configSite('site.develop.config_split') === TRUE) {
@@ -167,7 +168,9 @@ class SiteCommands extends CommandBase {
     }
     else {
       // Drupal 7
+      $execStack = $this->taskExecStack()->stopOnFail(TRUE);
       $execStack->dir('docroot');
+
       $commands[] = 'vset maintenance_mode 1';
       // Execute the update commands
       $commands[] = 'updatedb -y';
