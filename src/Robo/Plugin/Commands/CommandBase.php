@@ -236,7 +236,18 @@ class CommandBase extends \Robo\Tasks {
     }
     $commands = array_merge($commands, $extraCommandsArray);
 
+    $commandsAllowedToFailOnce = [
+      'updatedb -y'
+    ];
+
     foreach ($commands as $command) {
+      if (in_array($command, $commandsAllowedToFailOnce)) {
+        $this->taskExec("{$drush} {$command}")->run();
+        $index = array_search($command, $commandsAllowedToFailOnce);
+        unset($commandsAllowedToFailOnce[$index]);
+        continue;
+      }
+
       $execStack->exec("{$drush} " . $command);
     }
 
