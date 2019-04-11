@@ -96,6 +96,7 @@ class SqlCommands extends CommandBase {
    *
    * @command sql:dump
    * @option gzip Create a gzipped archive dump. Default TRUE.
+   * @option anonymize Anonymize sensitive data according to your robo.yml configuration. Default FALSE.
    *
    * @param string $output Absolute path to the resulting archive
    * @param array $options Command line options
@@ -103,7 +104,7 @@ class SqlCommands extends CommandBase {
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
    */
-  public function sqlDump($output = NULL, $options = ['gzip' => true]) {
+  public function sqlDump($output = NULL, $options = ['gzip' => true, 'anonymize' => false]) {
     if (empty($output)) {
       $output = $this->configSite('sql.dump.location');
       if (empty($output)) {
@@ -114,7 +115,14 @@ class SqlCommands extends CommandBase {
     if ($output[0] != '/') {
       $output = getcwd() . '/' . $output;
     }
+
     $drush = $this->drushExecutable();
+
+    if ($options['anonymize']) {
+      $exportPath = 'export PATH=' . $this->projectDir() . '/vendor/bin:$PATH; ';
+      $drush = $exportPath . $drush;
+    }
+
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     if ($this->isDrush9()) {
       $task = $this->taskExec($drush)
@@ -133,6 +141,12 @@ class SqlCommands extends CommandBase {
     if ($options['gzip']) {
       $task->arg('--gzip');
     }
+
+    if ($options['anonymize']) {
+      $anonArgs = json_encode($this->configSite('sql.dump.anonymize'));
+      $task->rawArg(" --extra-dump=\'--gdpr-replacements='{$anonArgs}'\'");
+    }
+
     return $task->run();
   }
 }

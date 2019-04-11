@@ -7,7 +7,19 @@ sites:
       password: password
     sql:
       dump:
-        location: web/sync/database.sql
+        location: docroot/sync/database.sql
+        anonymize:
+          users_field_data:
+            name:
+              formatter: name
+            telephone:
+              formatter: phoneNumber
+            mail:
+              formatter: email
+            pass:
+              formatter: password
+            preferred_admin_langcode:
+              formatter: clear
       sync:
         source: https://srv.storage.com/sync/database.sql.gz
     files:
