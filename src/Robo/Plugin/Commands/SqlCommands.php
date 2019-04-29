@@ -4,6 +4,7 @@ namespace EauDeWeb\Robo\Plugin\Commands;
 
 
 use EauDeWeb\Robo\Task\Curl\loadTasks;
+use machbarmacher\GdprDump\MysqldumpGdpr;
 use Robo\Exception\TaskException;
 
 
@@ -119,6 +120,9 @@ class SqlCommands extends CommandBase {
     $drush = $this->drushExecutable();
 
     if ($options['anonymize']) {
+      if (!class_exists(MysqldumpGdpr::class)) {
+        throw new TaskException(get_class($this), 'You cannot anonymize data without module "machbarmacher/gdpr-dump" being installed!');
+      }
       $exportPath = 'export PATH=' . $this->projectDir() . '/vendor/bin:$PATH; ';
       $drush = $exportPath . $drush;
     }
