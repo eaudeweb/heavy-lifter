@@ -12,7 +12,7 @@
         "phpunit/phpunit": "5.7"
     },
     "suggest": {
-        "machbarmacher/gdpr-dump": "dev-master#87fc3c71d307697e0a44d19b0afc0fd2970b3dd4"
+        "calimanleontin/gdpr-dump": "1.0.1"
     },
     "autoload": {
       "psr-4": {

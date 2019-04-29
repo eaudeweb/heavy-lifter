@@ -121,7 +121,7 @@ class SqlCommands extends CommandBase {
 
     if ($options['anonymize']) {
       if (!class_exists(MysqldumpGdpr::class)) {
-        throw new TaskException(get_class($this), 'You cannot anonymize data without module "machbarmacher/gdpr-dump" being installed!');
+        throw new TaskException(get_class($this), 'You cannot anonymize data without package "calimanleontin/gdpr-dump" being installed! Please run "composer require calimanleontin/gdpr-dump:1.0.2" !');
       }
       $exportPath = 'export PATH=' . $this->projectDir() . '/vendor/bin:$PATH; ';
       $drush = $exportPath . $drush;
