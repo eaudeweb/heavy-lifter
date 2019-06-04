@@ -12,10 +12,14 @@ sites:
           users_field_data:
             name:
               formatter: name
+              ignored_values:
+                - drupal@eaudeweb.ro
             telephone:
               formatter: phoneNumber
             mail:
               formatter: email
+              ignored_values:
+                - drupal@eaudeweb.ro
             pass:
               formatter: password
             preferred_admin_langcode:

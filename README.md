@@ -72,6 +72,8 @@ If you want to run custom drush scripts at the end of the site:develop command, 
 2. Update your robo.yml with the anonymize schema
 3. Run `./vendor/bin/robo sql:dump --anonymize`
 
+Row values listed under **ignored_values** will not be anonymized.
+
 ### Anonymize schema example
 
 ```
@@ -84,10 +86,14 @@ sites:
           users_field_data:
             name:
               formatter: name
+              ignored_values:
+                - drupal@eaudeweb.ro
             telephone:
               formatter: phoneNumber
             mail:
               formatter: email
+              ignored_values:
+                - drupal@eaudeweb.ro
             pass:
               formatter: password
             preferred_admin_langcode:
