@@ -32,4 +32,49 @@ If you want to run custom drush scripts at the end of the site:develop command, 
 
 ## Database anonymize 
 
-Check https://github.com/machbarmacher/gdpr-dump
+1. Run `composer require calimanleontin/gdpr-dump`
+2. Update your robo.yml with the anonymize schema
+3. Run `./vendor/bin/robo sql:dump --anonymize`
+
+### Anonymize schema example
+
+```
+sites:
+  default:
+    sql:
+      dump:
+        location: docroot/sync/database.sql
+        anonymize:
+          users_field_data:
+            name:
+              formatter: name
+            telephone:
+              formatter: phoneNumber
+            mail:
+              formatter: email
+            pass:
+              formatter: password
+            preferred_admin_langcode:
+              formatter: clear
+          table2:
+            column1:
+              formatter: randomText
+          ...
+```
+
+### Formatter types
+
+- name - generates a name
+- phoneNumber - generates a phone number
+- username - generates a random user name
+- password - generates a random password
+- email - generates a random email address
+- date - generates a date
+- longText - generates a sentence
+- number - generates a number
+- randomText - generates a sentence
+- text - generates a paragraph
+- uri - generates a URI
+- clear - generates an empty string
+
+For more information, check https://github.com/machbarmacher/gdpr-dump
