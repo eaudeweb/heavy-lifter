@@ -3,6 +3,8 @@ Doing the heavy lifting for local Drupal development.
 
 ## Installation
 
+https://packagist.org/packages/eaudeweb/heavy-lifter
+
 ### Drupal 8
 
 * Install the heavy-lifter with composer : `composer require eaudeweb/heavy-lifter`
