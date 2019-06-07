@@ -68,7 +68,7 @@ If you want to run custom drush scripts at the end of the site:develop command, 
 
 ## Database anonymize 
 
-1. Run `composer require calimanleontin/gdpr-dump`
+1. Run `composer require eaudeweb/gdpr-dump`
 2. Define your anonymize schema in an anonymize.schema.yml file, in the project root (in the same folder as robo.yml)
 3. Run `./vendor/bin/robo sql:dump --anonymize`
 
@@ -79,15 +79,17 @@ Row values listed under **ignored_values** will not be anonymized.
 ```
 users_field_data:
   name:
-    formatter: name
-    ignored_values:
-      - drupal@eaudeweb.ro
+    formatter: email
+    conditions:
+      - uid: [1, 76, 228, 81, 116, 117, 149, 393]
+    conditions_action: ignore
   telephone:
     formatter: phoneNumber
   mail:
     formatter: email
-    ignored_values:
-      - drupal@eaudeweb.ro
+    conditions:
+      - uid: [1, 76, 228, 81, 116, 117, 149, 393]
+    conditions_action: ignore
   pass:
     formatter: password
   preferred_admin_langcode:
@@ -95,6 +97,9 @@ users_field_data:
 table2:
   column1:
     formatter: randomText
+    conditions:
+      - name: ['Name to anonymize']
+      - conditions_action: anonymize
 ...
 ```
 
