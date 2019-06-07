@@ -80,15 +80,14 @@ Row values listed under **ignored_values** will not be anonymized.
 users_field_data:
   name:
     formatter: email
-    conditions:
-      - uid: [1, 76, 228, 81, 116, 117, 149, 393]
-    conditions_action: ignore
+    exclude:
+      uid: [1, 76, 228, 81, 116, 117, 149, 393]
   telephone:
     formatter: phoneNumber
   mail:
     formatter: email
-    conditions:
-      - uid: [1, 76, 228, 81, 116, 117, 149, 393]
+    exclude:
+      uid: [1, 76, 228, 81, 116, 117, 149, 393]
     conditions_action: ignore
   pass:
     formatter: password
@@ -97,9 +96,11 @@ users_field_data:
 table2:
   column1:
     formatter: randomText
-    conditions:
-      - name: ['Name to anonymize']
-      - conditions_action: anonymize
+    include:
+      name: ['Name to anonymize']
+  rand_num
+    formatter: randomNumber
+    arguments: [6] # max 6 digits
 ...
 ```
 
