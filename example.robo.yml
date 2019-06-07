@@ -8,22 +8,6 @@ sites:
     sql:
       dump:
         location: docroot/sync/database.sql
-        anonymize:
-          users_field_data:
-            name:
-              formatter: name
-              ignored_values:
-                - drupal@eaudeweb.ro
-            telephone:
-              formatter: phoneNumber
-            mail:
-              formatter: email
-              ignored_values:
-                - drupal@eaudeweb.ro
-            pass:
-              formatter: password
-            preferred_admin_langcode:
-              formatter: clear
       sync:
         source: https://srv.storage.com/sync/database.sql.gz
     files:
@@ -36,7 +20,7 @@ sites:
         excluded_commands:
           - locale:check
           - yyy
-        extra_commands :
+        extra_commands:
           - st
       develop:
         admin_username: username

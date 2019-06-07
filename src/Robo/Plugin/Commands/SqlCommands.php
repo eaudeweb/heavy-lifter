@@ -6,6 +6,7 @@ namespace EauDeWeb\Robo\Plugin\Commands;
 use EauDeWeb\Robo\Task\Curl\loadTasks;
 use machbarmacher\GdprDump\MysqldumpGdpr;
 use Robo\Exception\TaskException;
+use Symfony\Component\Yaml\Yaml;
 
 
 class SqlCommands extends CommandBase {
@@ -120,6 +121,11 @@ class SqlCommands extends CommandBase {
     $drush = $this->drushExecutable();
 
     if ($options['anonymize']) {
+      $anonSchema = $this->projectDir() . '/anonymize.schema.yml';
+      if (!file_exists($anonSchema)) {
+        throw new TaskException(get_class($this), 'The anonymize.schema.yml file is missing.');
+      }
+
       if (!class_exists(MysqldumpGdpr::class)) {
         throw new TaskException(get_class($this), 'You cannot anonymize data without package "calimanleontin/gdpr-dump" being installed! Please run "composer require calimanleontin/gdpr-dump:1.0.2" !');
       }
@@ -147,7 +153,7 @@ class SqlCommands extends CommandBase {
     }
 
     if ($options['anonymize']) {
-      $anonArgs = json_encode($this->configSite('sql.dump.anonymize'));
+      $anonArgs = json_encode(Yaml::parseFile($anonSchema));
       $task->rawArg(" --extra-dump=\'--gdpr-replacements='{$anonArgs}'\'");
     }
 
