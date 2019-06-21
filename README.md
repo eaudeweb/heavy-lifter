@@ -80,7 +80,7 @@ Row values listed under **ignored_values** will not be anonymized.
 users_field_data:
   name:
     formatter: email
-    exclude:
+    exclude: # the rows that have these values will NOT be anonymized
       uid: [1, 76, 228, 81, 116, 117, 149, 393]
   telephone:
     formatter: phoneNumber
@@ -96,11 +96,16 @@ users_field_data:
 table2:
   column1:
     formatter: randomText
-    include:
+    include: # only the rows that have these values will be anonymized
       name: ['Name to anonymize']
   rand_num
     formatter: randomNumber
-    arguments: [6] # max 6 digits
+    arguments: [6] # argument passed to the randomNumber() function from the Faker library, max 6 digits
+taxonomy_term_field_revision:
+  name:
+    formatter: company
+    include: # you can also use SELECT queries to define your list of included rows. The select query MUST only select ONE column
+      tid: SELECT tid FROM taxonomy_term_field_data WHERE vid = "partners"
 ...
 ```
 
@@ -119,4 +124,4 @@ table2:
 - uri - generates a URI
 - clear - generates an empty string
 
-For more information, check https://github.com/machbarmacher/gdpr-dump
+For more information about available formatters, check https://github.com/fzaninotto/Faker#formatters
