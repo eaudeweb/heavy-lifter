@@ -54,6 +54,8 @@ class SqlCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function sqlSync($options = ['anonymize' => FALSE]) {
+    $this->allowOnlyOnLinux();
+
     $url = $this->configSite('sql.sync.source');
     $this->validateHttpsUrl($url);
     $commands = [];
@@ -114,8 +116,9 @@ class SqlCommands extends CommandBase {
       }
     }
     $output = preg_replace('/.gz$/', '', $output);
-    if ($output[0] != '/') {
-      $output = getcwd() . '/' . $output;
+    $separator = $this->isLinuxServer() ? '/' : '\\';
+    if ($output[0] != $separator) {
+      $output = getcwd() . $separator . $output;
     }
 
     $drush = $this->drushExecutable();

@@ -125,3 +125,8 @@ taxonomy_term_field_revision:
 - clear - generates an empty string
 
 For more information about available formatters, check https://github.com/fzaninotto/Faker#formatters
+
+### Observations for Windows environment:
+ - only command `sql:dump` is available
+ - robo path is `./vendor/consolidation/robo/robo`
+ 

@@ -31,8 +31,8 @@ class SiteCommands extends CommandBase {
    * @throws \Exception when cannot find the Drupal installation folder.
    */
   public function siteDevelop($newPassword = 'password') {
+    $this->allowOnlyOnLinux();
     $this->validateConfig();
-    $drush = $this->drushExecutable();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $commands = [];
 
@@ -86,6 +86,7 @@ class SiteCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function siteInstall() {
+    $this->allowOnlyOnLinux();
     $url =  $this->configSite('sql.sync.source');
     $this->validateHttpsUrl($url);
 
@@ -123,7 +124,6 @@ class SiteCommands extends CommandBase {
       return $sync;
     }
     return $download;
-
   }
 
   /**
@@ -136,8 +136,8 @@ class SiteCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function siteUpdate() {
+    $this->allowOnlyOnLinux();
     $this->validateConfig();
-    $drush = $this->drushExecutable();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $commands = [];
 
