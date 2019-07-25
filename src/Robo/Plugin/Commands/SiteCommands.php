@@ -82,6 +82,51 @@ class SiteCommands extends CommandBase {
   }
 
   /**
+   * @return \Robo\Result
+   * @throws \Robo\Exception\TaskException
+   */
+  public function siteInstall() {
+    $this->allowOnlyOnLinux();
+    $url =  $this->configSite('sql.sync.source');
+    $this->validateHttpsUrl($url);
+
+    $dir = $this->taskTmpDir('heavy-lifter')->run();
+    $dest = $dir->getData()['path'] . '/database.sql';
+    $dest_gz = $dest . '.gz';
+
+    $url =  $this->configSite('sql.sync.source');
+    $username = $this->configSite('sync.username');
+    $password = $this->configSite('sync.password');
+    $this->validateHttpsUrl($url);
+    $download = $this->taskCurl($url)
+      ->followRedirects()
+      ->failOnHttpError()
+      ->locationTrusted()
+      ->output($dest_gz)
+      ->basicAuth($username, $password)
+      ->option('--create-dirs')
+      ->run();
+
+    if ($download->wasSuccessful()) {
+      $build = $this->collectionBuilder();
+      $build->addTask(
+        $this->taskExec('gzip')->option('-d')->arg($dest_gz)
+      );
+      $drush = $this->drushExecutable();
+      $drush = $this->taskDrushStack($drush)
+        ->drush('sql:drop')
+        ->drush(['sql:query','--file', $dest]);
+      $build->addTask($drush);
+      $sync = $build->run();
+      if ($sync->wasSuccessful()) {
+        return $this->siteUpdate();
+      }
+      return $sync;
+    }
+    return $download;
+  }
+
+  /**
    * Update the local instance: import configuration, update database, rebuild
    * cache.
    *
