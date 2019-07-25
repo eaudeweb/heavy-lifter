@@ -52,6 +52,8 @@ class SqlCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function sqlSync($options = ['anonymize' => FALSE]) {
+    $this->allowOnlyOnLinux();
+
     $url = $this->configSite('sql.sync.source');
     $this->validateHttpsUrl($url);
     $commands = [];

@@ -29,3 +29,8 @@ The robo commands and guidelines are similar to the ones on Drupal 8, just a few
 
 If you want to run custom drush scripts at the end of the site:develop command, add these script in the PROJECT/etc/scripts/develop folder.
 
+
+### Observations for Windows environment:
+ - only command `sql:dump` is available
+ - robo path is `./vendor/consolidation/robo/robo`
+ 
