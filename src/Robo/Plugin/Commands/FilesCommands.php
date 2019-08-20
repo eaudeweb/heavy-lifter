@@ -29,6 +29,7 @@ class FilesCommands extends CommandBase {
    * @throws \Exception when cannot find the Drupal installation folder.
    */
   public function filesSync() {
+    $this->allowOnlyOnLinux();
     $site = 'default';
 
     $this->validateConfig();
@@ -62,7 +63,6 @@ class FilesCommands extends CommandBase {
     return $result;
   }
 
-
   /**
    * Create archive with files directory to the given path.
    *
@@ -72,6 +72,7 @@ class FilesCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException when output path is not absolute
    */
   public function filesDump($output = '') {
+    $this->allowOnlyOnLinux();
 
     if (empty($output)) {
       $output = $this->configSite('files.dump.location');
