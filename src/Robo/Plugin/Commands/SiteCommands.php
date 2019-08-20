@@ -125,7 +125,18 @@ class SiteCommands extends CommandBase
             return $sync;
         }
         return $download;
+  
+    }
 
+    /**
+     * Update Drupal core. Check that "drupal/core:^8.7" and "webflo/drupal-core-require-dev:^8.7" exist in composer.json declaration.
+     *
+     * @command core:update
+     */
+    public function coreUpdate()
+    {
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec("composer update drupal/core webflo/drupal-core-require-dev --with-dependencies")->run();
     }
 
     /**
@@ -166,6 +177,7 @@ class SiteCommands extends CommandBase
         // restart apache2
         $execStack = $this->taskExecStack()->stopOnFail(TRUE);
         $execStack->exec("systemctl restart apache2")->run();
+
     }
 
     /**
@@ -177,8 +189,7 @@ class SiteCommands extends CommandBase
      * @return null|\Robo\Result
      * @throws \Robo\Exception\TaskException
      */
-    public
-    function siteUpdate()
+    public function siteUpdate()
     {
         $this->validateConfig();
         $drush = $this->drushExecutable();
@@ -236,8 +247,7 @@ class SiteCommands extends CommandBase
      *
      * @throws \ReflectionException
      */
-    public
-    function siteConfig()
+    public function siteConfig()
     {
         $reflector = new \ReflectionClass('EauDeWeb\Robo\Plugin\Commands\SiteCommands');
         if ($source = realpath(dirname($reflector->getFileName()) . '/../../../../example.robo.yml')) {
