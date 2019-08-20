@@ -83,17 +83,6 @@ class SiteCommands extends CommandBase
     }
 
     /**
-     * Update Drupal core. Check that "drupal/core:^8.7" and "webflo/drupal-core-require-dev:^8.7" exist in composer.json declaration.
-     *
-     * @command core:update
-     */
-    public function coreUpdate()
-    {
-        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
-        $execStack->exec("composer update drupal/core webflo/drupal-core-require-dev --with-dependencies")->run();
-    }
-
-    /**
      * @return \Robo\Result
      * @throws \Robo\Exception\TaskException
      */
@@ -136,6 +125,58 @@ class SiteCommands extends CommandBase
             return $sync;
         }
         return $download;
+  
+    }
+
+    /**
+     * Update Drupal core. Check that "drupal/core:^8.7" and "webflo/drupal-core-require-dev:^8.7" exist in composer.json declaration.
+     *
+     * @command core:update
+     */
+    public function coreUpdate()
+    {
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec("composer update drupal/core webflo/drupal-core-require-dev --with-dependencies")->run();
+    }
+
+    /**
+     * Setup for a new project
+     *
+     * @command project:create
+     */
+    public function createProject($name = 'name')
+    {
+        // create name.conf
+        $conf = "<VirtualHost *:80" . "> \n"
+            . "     DocumentRoot /home/edw/Work" . "/" . $name . ".local/web" . "/ \n"
+            . "     ServerName " . $name . ".local \n"
+            . "     <Directory  /home/edw/Work" . "/" . $name . ".local/web/> \n"
+            . "          AllowOverride All \n"
+            . "          Require all granted \n"
+            . "     </Directory" . "> \n"
+            . "</VirtualHost" . ">";
+
+
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec("sudo  touch /etc/apache2/sites-available/" . $name . ".conf")->run();
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec('echo "' . $conf . '" | sudo tee /etc/apache2/sites-available/' . $name . '.conf')->run();
+
+        // modify hosts
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec("cat /etc/hosts | sudo tee /etc/copy.txt")->run();
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec('sed "1 s/^/127.0.0.1   "' . $name . '".local \n/" /etc/copy.txt | sudo tee /etc/hosts')->run();
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec('sudo rm /etc/copy.txt')->run();
+
+        // enable name.conf
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec("sudo a2ensite " . $name . ".conf")->run();
+
+        // restart apache2
+        $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+        $execStack->exec("systemctl restart apache2")->run();
 
     }
 
