@@ -111,11 +111,11 @@ class CommandBase extends \Robo\Tasks {
    */
   protected function drushExecutable() {
     /** @TODO Windows / Windows+BASH / WinBash / Cygwind not tested */
-    if (realpath(getcwd() . '/vendor/bin/drush') && $this->isLinuxServer()) {
+    if (realpath(getcwd() . '/vendor/bin/drush')) {
       return realpath(getcwd() . '/vendor/bin/drush');
     }
     else if (realpath(getcwd() . '/vendor/drush/drush/drush')) {
-      return realpath(getcwd() . '/vendor/drush/drush/drush');
+      realpath(getcwd() . '/vendor/drush/drush/drush');
     }
     throw new TaskException($this, 'Cannot find Drush executable inside this project');
   }
@@ -182,6 +182,17 @@ class CommandBase extends \Robo\Tasks {
     $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
     $p->run();
     return !empty($p->getOutput());
+  }
+
+  /**
+   * @param $module
+   * @return string
+   */
+  protected function getModuleInfo($module) {
+    $drush = $this->drushExecutable();
+    $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
+    $p->run();
+    return $p->getOutput();
   }
 
   /**
@@ -254,16 +265,4 @@ class CommandBase extends \Robo\Tasks {
     return $execStack;
   }
 
-  protected function isLinuxServer() {
-    return strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN';
-  }
-
-  /**
-   * @throws \Robo\Exception\TaskException
-   */
-  protected function allowOnlyOnLinux() {
-    if (!$this->isLinuxServer()) {
-      throw new TaskException(static::class, "This command is only supported by Unix environments!");
-    }
-  }
 }

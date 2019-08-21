@@ -5,6 +5,8 @@ sites:
     sync:
       username: username
       password: password
+    work:
+      dir: /home/edw/Work
     sql:
       dump:
         location: docroot/sync/database.sql
