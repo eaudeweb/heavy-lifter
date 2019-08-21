@@ -2,14 +2,11 @@
 /**
  * @file CommandBase.php
  */
-
 namespace EauDeWeb\Robo\Plugin\Commands;
-
 use Robo\Collection\CollectionBuilder;
 use Robo\Exception\TaskException;
 use Robo\Robo;
 use Symfony\Component\Process\Process;
-
 /**
  * Class CommandBase for other commands.
  *
@@ -40,7 +37,6 @@ class CommandBase extends \Robo\Tasks {
     }
     return TRUE;
   }
-
 
   /**
    * Validate the URL is https
@@ -136,7 +132,6 @@ class CommandBase extends \Robo\Tasks {
     }
   }
 
-
   /**
    * Detect drush version.
    *
@@ -163,7 +158,6 @@ class CommandBase extends \Robo\Tasks {
     return FALSE;
   }
 
-
   /**
    * @return bool
    * @throws \Robo\Exception\TaskException
@@ -185,18 +179,27 @@ class CommandBase extends \Robo\Tasks {
   }
 
   /**
+   * @param $module
+   * @return string
+   */
+  protected function getModuleInfo($module) {
+    $drush = $this->drushExecutable();
+    $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
+    $p->run();
+    return $p->getOutput();
+  }
+
+  /**
    * @param CollectionBuilder $execStack
    * @param $phase
    */
   protected function addDrushScriptsToExecStack(CollectionBuilder $execStack, $phase) {
     $drush = $this->drushExecutable();
     $drupal = $this->isDrush9() ? 'drupal8' : 'drupal7';
-
     $script_paths = [
       realpath(__DIR__ . "/../../../../etc/scripts/{$drupal}/{$phase}"),
       realpath(getcwd() . "/etc/scripts/{$phase}"),
     ];
-
     foreach ($script_paths as $path) {
       if (!file_exists($path)) {
         continue;
@@ -217,10 +220,8 @@ class CommandBase extends \Robo\Tasks {
    */
   protected function updateDrushCommandStack($execStack, $commands, $excludedCommandsArray = [], $extraCommandsArray = []) {
     $drush = $this->drushExecutable();
-
     if (!empty($excludedCommandsArray)) {
       $excludedCommands = implode("|", $excludedCommandsArray);
-
       foreach ($commands as $command) {
         if (preg_match('/\b(' . $excludedCommands . ')\b/', $command)) {
           $index = array_search($command, $commands);
@@ -230,16 +231,13 @@ class CommandBase extends \Robo\Tasks {
         }
       }
     }
-
     if (empty($extraCommandsArray)) {
       $extraCommandsArray = [];
     }
     $commands = array_merge($commands, $extraCommandsArray);
-
     $commandsAllowedToFailOnce = [
       'updatedb -y'
     ];
-
     foreach ($commands as $command) {
       if (in_array($command, $commandsAllowedToFailOnce)) {
         $this->taskExec("{$drush} {$command}")->run();
@@ -247,10 +245,8 @@ class CommandBase extends \Robo\Tasks {
         unset($commandsAllowedToFailOnce[$index]);
         continue;
       }
-
       $execStack->exec("{$drush} " . $command);
     }
-
     return $execStack;
   }
 
