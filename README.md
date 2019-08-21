@@ -130,15 +130,3 @@ For more information about available formatters, check https://github.com/fzanin
  - only command `sql:dump` is available
  - robo path is `./vendor/consolidation/robo/robo`
  
-### Update command for drupal/core
-
- - `drush core:update` will run the associated composer commands to update drupal's core to the latest stable release
- 
-### Setup a new project
- - you can use heavy-lifter to easily setup a project locally
- - first, you need to clone the repository of the project in your desired working directory in a folder named `your_website.local`
- - edit `robo.yml` and add your working directory in the `sites.default.work.dir` key
- - after that you can execute the command `drush project:create your_website_name`
- - after successfully executing the command, all you have to do is create a local database for your project and modify `settings.local.php` and then you're good to go 
-
- 
