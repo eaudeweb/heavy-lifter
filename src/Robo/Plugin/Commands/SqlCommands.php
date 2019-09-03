@@ -130,7 +130,7 @@ class SqlCommands extends CommandBase {
       }
 
       if (!class_exists(MysqldumpGdpr::class)) {
-        throw new TaskException(get_class($this), 'You cannot anonymize data without package "eaudeweb/gdpr-dump" being installed! Please run "composer require eaudeweb/gdpr-dump:1.0.5" !');
+        throw new TaskException(get_class($this), 'You cannot anonymize data without package "eaudeweb/gdpr-dump" being installed! Please run "composer require eaudeweb/gdpr-dump:1.0.6" !');
       }
       $exportPath = 'export PATH=' . $this->projectDir() . '/vendor/bin:$PATH; ';
       $drush = $exportPath . $drush;
