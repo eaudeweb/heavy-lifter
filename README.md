@@ -86,6 +86,7 @@ users_field_data:
     formatter: phoneNumber
   mail:
     formatter: email
+    unique: true
     exclude:
       uid: [1, 76, 228, 81, 116, 117, 149, 393]
     conditions_action: ignore
