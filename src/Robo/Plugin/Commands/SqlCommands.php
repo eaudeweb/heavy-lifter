@@ -21,15 +21,15 @@ class SqlCommands extends CommandBase {
    *
    * @param string $destination
    *   Destination path to save the SQL database dump.
-   *
+   * @param string $site
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException
    *
    */
-  public function sqlDownload($destination) {
-    $url =  $this->configSite('sql.sync.source');
-    $username = $this->configSite('sync.username');
-    $password = $this->configSite('sync.password');
+  public function sqlDownload($destination, $site = 'default') {
+    $url =  $this->configSite('sql.sync.source', $site);
+    $username = $this->configSite('sync.username', $site);
+    $password = $this->configSite('sync.password', $site);
     $this->validateHttpsUrl($url);
     return $this->taskCurl($url)
       ->followRedirects()
@@ -46,6 +46,7 @@ class SqlCommands extends CommandBase {
    *
    * @command sql:sync
    *
+   * @param string $site
    * @param array $options
    *  Command options.
    * @option $anonymize Anonymize data after importing the SQL dump
@@ -53,10 +54,10 @@ class SqlCommands extends CommandBase {
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException
    */
-  public function sqlSync($options = ['anonymize' => FALSE]) {
+  public function sqlSync($site = 'default', $options = ['anonymize' => FALSE]) {
     $this->allowOnlyOnLinux();
 
-    $url = $this->configSite('sql.sync.source');
+    $url = $this->configSite('sql.sync.source', $site);
     $this->validateHttpsUrl($url);
     $commands = [];
 
@@ -65,11 +66,11 @@ class SqlCommands extends CommandBase {
     $dest_gz = $dest . '.gz';
     $download = $this->sqlDownload($dest_gz);
     if ($download->wasSuccessful()) {
-      $drush = $this->drushExecutable();
+      $drush = $this->drushExecutable($site);
       $execStack = $this->taskExecStack()->stopOnFail(TRUE);
       $execStack->exec("gzip -d $dest_gz");
 
-      if ($this->isDrush9()) {
+      if ($this->isDrush9($site)) {
         $commands[] = 'sql:drop -y';
         $commands[] = 'sql:query --file ' . $dest;
       }
@@ -85,10 +86,10 @@ class SqlCommands extends CommandBase {
         $commands[] = 'project:anonymize -y';
       }
 
-      $excludedCommandsArray = $this->configSite('sql.sync.excluded_commands');
-      $extraCommandsArray = $this->configSite('sql.sync.extra_commands');
+      $excludedCommandsArray = $this->configSite('sql.sync.excluded_commands', $site);
+      $extraCommandsArray = $this->configSite('sql.sync.extra_commands', $site);
 
-      $execStack = $this->updateDrushCommandStack($execStack, $commands, $excludedCommandsArray, $extraCommandsArray);
+      $execStack = $this->updateDrushCommandStack($execStack, $commands, $excludedCommandsArray, $extraCommandsArray, $site);
 
       $execStack->run();
     }
@@ -103,14 +104,15 @@ class SqlCommands extends CommandBase {
    * @option anonymize Anonymize sensitive data according to your robo.yml configuration. Default FALSE.
    *
    * @param string $output Absolute path to the resulting archive
+   * @param string $site The site whose database you wish to dump.
    * @param array $options Command line options
    *
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
    */
-  public function sqlDump($output = NULL, $options = ['gzip' => true, 'anonymize' => false]) {
+  public function sqlDump($output = NULL, $site = 'default', $options = ['gzip' => true, 'anonymize' => false]) {
     if (empty($output)) {
-      $output = $this->configSite('sql.dump.location');
+      $output = $this->configSite('sql.dump.location', $site);
       if (empty($output)) {
         throw new TaskException(get_class($this), 'Dump location was not set. Please add the path parameter or add default_dump_location in your robo.yml.');
       }
@@ -121,7 +123,7 @@ class SqlCommands extends CommandBase {
       $output = getcwd() . $separator . $output;
     }
 
-    $drush = $this->drushExecutable();
+    $drush = $this->drushExecutable($site);
 
     if ($options['anonymize']) {
       $anonSchema = $this->projectDir() . '/anonymize.schema.yml';
@@ -137,7 +139,7 @@ class SqlCommands extends CommandBase {
     }
 
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
-    if ($this->isDrush9()) {
+    if ($this->isDrush9($site)) {
       $task = $this->taskExec($drush)
         ->rawArg('sql:dump')
         ->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history')

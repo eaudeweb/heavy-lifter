@@ -9,9 +9,9 @@ class FilesCommands extends CommandBase {
   /**
    * @inheritdoc
    */
-  protected function validateConfig() {
+  protected function validateConfig($site = 'default') {
     parent::validateConfig();
-    $url =  $this->configSite('files.sync.source');
+    $url =  $this->configSite('files.sync.source', $site);
     if (!empty($url) && strpos($url, 'https://') !== 0) {
       throw new TaskException(
         $this,
@@ -25,17 +25,17 @@ class FilesCommands extends CommandBase {
    *
    * @command files:sync
    *
+   * @param string $site
    * @return null|\Robo\Result
    * @throws \Exception when cannot find the Drupal installation folder.
    */
-  public function filesSync() {
+  public function filesSync($site = 'default') {
     $this->allowOnlyOnLinux();
-    $site = 'default';
 
-    $this->validateConfig();
-    $url =  $this->configSite('files.sync.source');
-    $username = $this->configSite('sync.username');
-    $password = $this->configSite('sync.password');
+    $this->validateConfig($site);
+    $url =  $this->configSite('files.sync.source', $site);
+    $username = $this->configSite('sync.username', $site);
+    $password = $this->configSite('sync.password', $site);
     $files_tar_gz = 'files.tar.gz';
 
     $root = $this->drupalRoot();
@@ -68,21 +68,21 @@ class FilesCommands extends CommandBase {
    *
    * @command files:archive
    *
+   * @param string $site
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
    */
-  public function filesDump($output = '') {
+  public function filesDump($output = '', $site = 'default') {
     $this->allowOnlyOnLinux();
 
     if (empty($output)) {
-      $output = $this->configSite('files.dump.location');
+      $output = $this->configSite('files.dump.location', $site);
     }
 
     if ($output[0] != '/') {
       $output = getcwd() . '/' . $output;
     }
 
-    $site = 'default';
     $root = $this->drupalRoot();
     $files_dir = $root . '/sites/' . $site . '/files';
     $build = $this->collectionBuilder();
