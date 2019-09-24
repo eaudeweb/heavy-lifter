@@ -131,3 +131,20 @@ For more information about available formatters, check https://github.com/fzanin
  - only command `sql:dump` is available
  - robo path is `./vendor/consolidation/robo/robo`
  
+### Multisite
+
+For multisites, create another key under `sites` in `robo.yml` and configure it similar to `sites:default`.
+
+To run a command on a sub site, use the `--site SITE` argument.
+
+Example:
+
+robo.yml:
+```
+sites:
+  default:
+    ...
+  subsite:
+    ...
+```
+`./vendor/bin/robo sql:sync --site subsite`

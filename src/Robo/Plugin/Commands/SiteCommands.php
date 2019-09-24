@@ -27,12 +27,14 @@ class SiteCommands extends CommandBase {
    *
    * @command site:develop
    *
-   * @param string $site
    * @param string $newPassword
+   * @param array $options
+   *  Command options.
    * @throws \Exception when cannot find the Drupal installation folder.
    */
-  public function siteDevelop($newPassword = 'password', $site = 'default') {
+  public function siteDevelop($newPassword = 'password', $options = ['site' => 'default']) {
     $this->allowOnlyOnLinux();
+    $site = $options['site'];
     $this->validateConfig();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $commands = [];
@@ -83,12 +85,14 @@ class SiteCommands extends CommandBase {
   }
 
   /**
-   * @param string $site
+   * @param array $options
+   *  Command options.
    * @return \Robo\Result
    * @throws \Robo\Exception\TaskException
    */
-  public function siteInstall($site) {
+  public function siteInstall($options = ['site' => 'default']) {
     $this->allowOnlyOnLinux();
+    $site = $options['site'];
     $url =  $this->configSite('sql.sync.source', $site);
     $this->validateHttpsUrl($url);
 
@@ -183,13 +187,15 @@ class SiteCommands extends CommandBase {
    *
    * @command site:update
    *
-   * @param string $site
+   * @param array $options
+   *  Command options.
    *
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException
    */
-  public function siteUpdate($site = 'default') {
+  public function siteUpdate($options = ['site' => 'default']) {
     $this->allowOnlyOnLinux();
+    $site = $options['site'];
     $this->validateConfig();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $commands = [];

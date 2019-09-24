@@ -21,12 +21,14 @@ class SqlCommands extends CommandBase {
    *
    * @param string $destination
    *   Destination path to save the SQL database dump.
-   * @param string $site
+   * @param array $options
+   *  Command options.
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException
    *
    */
-  public function sqlDownload($destination, $site = 'default') {
+  public function sqlDownload($destination, $options = ['site' => 'default']) {
+    $site = $options['site'];
     $url =  $this->configSite('sql.sync.source', $site);
     $username = $this->configSite('sync.username', $site);
     $password = $this->configSite('sync.password', $site);
@@ -46,7 +48,6 @@ class SqlCommands extends CommandBase {
    *
    * @command sql:sync
    *
-   * @param string $site
    * @param array $options
    *  Command options.
    * @option $anonymize Anonymize data after importing the SQL dump
@@ -54,8 +55,9 @@ class SqlCommands extends CommandBase {
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException
    */
-  public function sqlSync($site = 'default', $options = ['anonymize' => FALSE]) {
+  public function sqlSync($options = ['anonymize' => FALSE, 'site' => 'default']) {
     $this->allowOnlyOnLinux();
+    $site = $options['site'];
 
     $url = $this->configSite('sql.sync.source', $site);
     $this->validateHttpsUrl($url);
@@ -104,13 +106,13 @@ class SqlCommands extends CommandBase {
    * @option anonymize Anonymize sensitive data according to your robo.yml configuration. Default FALSE.
    *
    * @param string $output Absolute path to the resulting archive
-   * @param string $site The site whose database you wish to dump.
    * @param array $options Command line options
    *
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
    */
-  public function sqlDump($output = NULL, $site = 'default', $options = ['gzip' => true, 'anonymize' => false]) {
+  public function sqlDump($output = NULL, $options = ['gzip' => true, 'anonymize' => false, 'site' => 'default']) {
+    $site = $options['site'];
     if (empty($output)) {
       $output = $this->configSite('sql.dump.location', $site);
       if (empty($output)) {

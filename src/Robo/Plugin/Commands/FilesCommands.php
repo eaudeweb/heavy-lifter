@@ -11,7 +11,7 @@ class FilesCommands extends CommandBase {
    */
   protected function validateConfig($site = 'default') {
     parent::validateConfig();
-    $url =  $this->configSite('files.sync.source', $site);
+    $url = $this->configSite('files.sync.source', $site);
     if (!empty($url) && strpos($url, 'https://') !== 0) {
       throw new TaskException(
         $this,
@@ -25,12 +25,14 @@ class FilesCommands extends CommandBase {
    *
    * @command files:sync
    *
-   * @param string $site
+   * @param array $options
+   *  Command options.
    * @return null|\Robo\Result
    * @throws \Exception when cannot find the Drupal installation folder.
    */
-  public function filesSync($site = 'default') {
+  public function filesSync($options = ['site' => 'default']) {
     $this->allowOnlyOnLinux();
+    $site = $options['site'];
 
     $this->validateConfig($site);
     $url =  $this->configSite('files.sync.source', $site);
@@ -68,12 +70,14 @@ class FilesCommands extends CommandBase {
    *
    * @command files:archive
    *
-   * @param string $site
+   * @param array $options
+   *  Command options.
    * @return null|\Robo\Result
    * @throws \Robo\Exception\TaskException when output path is not absolute
    */
-  public function filesDump($output = '', $site = 'default') {
+  public function filesDump($output = '', $options = ['site' => 'default']) {
     $this->allowOnlyOnLinux();
+    $site = $options['site'];
 
     if (empty($output)) {
       $output = $this->configSite('files.dump.location', $site);
