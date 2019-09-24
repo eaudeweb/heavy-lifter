@@ -43,7 +43,7 @@ class SiteCommands extends CommandBase {
       $this->yell('sites.default.site.develop.admin_username not set, password will not be reset');
     }
     $modules = $this->configSite('site.develop.modules', $site);
-    if ($this->isDrush9($site)) {
+    if ($this->isDrush9()) {
       if (!empty($username)) {
         $commands[] = 'user:password ' . $username . ' ' . $newPassword;
       }
@@ -194,7 +194,7 @@ class SiteCommands extends CommandBase {
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $commands = [];
 
-    if ($this->isDrush9($site)) {
+    if ($this->isDrush9()) {
       $commands[] = "state-set system.maintenance_mode TRUE";
 
       // Allow updatedb to fail once and execute it again after config:import.

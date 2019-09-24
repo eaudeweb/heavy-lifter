@@ -70,7 +70,7 @@ class SqlCommands extends CommandBase {
       $execStack = $this->taskExecStack()->stopOnFail(TRUE);
       $execStack->exec("gzip -d $dest_gz");
 
-      if ($this->isDrush9($site)) {
+      if ($this->isDrush9()) {
         $commands[] = 'sql:drop -y';
         $commands[] = 'sql:query --file ' . $dest;
       }
@@ -139,7 +139,7 @@ class SqlCommands extends CommandBase {
     }
 
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
-    if ($this->isDrush9($site)) {
+    if ($this->isDrush9()) {
       $task = $this->taskExec($drush)
         ->rawArg('sql:dump')
         ->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history')

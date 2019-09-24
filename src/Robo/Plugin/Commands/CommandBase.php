@@ -107,16 +107,16 @@ class CommandBase extends \Robo\Tasks {
    * @return string
    * @throws \Robo\Exception\TaskException
    */
-  protected function drushExecutable($site = 'default', $useSite = 'true') {
+  protected function drushExecutable($site = 'default') {
     /** @TODO Windows / Windows+BASH / WinBash / Cygwind not tested */
     if (realpath(getcwd() . '/vendor/bin/drush') && $this->isLinuxServer()) {
-      if ($useSite) {
+      if ($site != 'default') {
         return realpath(getcwd() . '/vendor/bin/drush') . ' -l ' . $site;
       }
       return realpath(getcwd() . '/vendor/bin/drush');
     }
     else if (realpath(getcwd() . '/vendor/drush/drush/drush')) {
-      if ($useSite) {
+      if ($site != 'default') {
         return realpath(getcwd() . '/vendor/drush/drush/drush') . ' -l ' . $site;
       }
       return realpath(getcwd() . '/vendor/drush/drush/drush');
@@ -146,8 +146,8 @@ class CommandBase extends \Robo\Tasks {
    * @param string $site
    * @throws \Robo\Exception\TaskException
    */
-  protected function getDrushVersion($site = 'default') {
-    $drush = $this->drushExecutable($site, FALSE);
+  protected function getDrushVersion() {
+    $drush = $this->drushExecutable();
     $p = new Process([$drush, 'version', '--format=json']);
     $p->run();
     if ($output = $p->getOutput()) {
@@ -172,8 +172,8 @@ class CommandBase extends \Robo\Tasks {
    * @return bool
    * @throws \Robo\Exception\TaskException
    */
-  protected function isDrush9($site = 'default') {
-    $drushVersion = $this->getDrushVersion($site);
+  protected function isDrush9() {
+    $drushVersion = $this->getDrushVersion();
     return version_compare($drushVersion, '9') >= 0;
   }
 
