@@ -66,7 +66,7 @@ class SqlCommands extends CommandBase {
     $dir = $this->taskTmpDir('heavy-lifter')->run();
     $dest = $dir->getData()['path'] . '/database.sql';
     $dest_gz = $dest . '.gz';
-    $download = $this->sqlDownload($dest_gz);
+    $download = $this->sqlDownload($dest_gz, ['site' => $site]);
     if ($download->wasSuccessful()) {
       $drush = $this->drushExecutable($site);
       $execStack = $this->taskExecStack()->stopOnFail(TRUE);
