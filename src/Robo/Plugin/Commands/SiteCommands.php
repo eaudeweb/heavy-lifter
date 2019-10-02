@@ -125,7 +125,7 @@ class SiteCommands extends CommandBase {
       $build->addTask($drush);
       $sync = $build->run();
       if ($sync->wasSuccessful()) {
-        return $this->siteUpdate($site);
+        return $this->siteUpdate($options);
       }
       return $sync;
     }
