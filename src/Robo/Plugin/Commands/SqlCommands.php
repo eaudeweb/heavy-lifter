@@ -125,6 +125,10 @@ class SqlCommands extends CommandBase {
       $output = getcwd() . $separator . $output;
     }
 
+    if (!$this->isLinuxServer()) {
+      $output = str_replace("\\", "\\/", $output);
+    }
+
     $drush = $this->drushExecutable($site);
 
     if ($options['anonymize']) {
