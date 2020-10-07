@@ -220,9 +220,9 @@ class SiteCommands extends CommandBase {
         $commands[] = 'locale:update';
       }
 
-      if ($this->isModuleEnabled('pathauto') && floatval(substr(trim($this->getModuleInfo('pathauto')), -3)) >= 1.4) {
-        $commands[] = 'pathauto:aliases-generate create all';
-      }
+//      if ($this->isModuleEnabled('pathauto') && floatval(substr(trim($this->getModuleInfo('pathauto')), -3)) >= 1.4) {
+//        $commands[] = 'pathauto:aliases-generate create all';
+//      }
 
       $commands[] = 'cache:rebuild';
       $commands[] = 'state-set system.maintenance_mode FALSE';
