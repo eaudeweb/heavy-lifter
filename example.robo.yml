@@ -9,7 +9,7 @@ sites:
       dir: /home/user/Work
     sql:
       dump:
-        location: docroot/sync/database.sql
+        location: web/sync/database.sql
       sync:
         source: https://srv.storage.com/sync/database.sql.gz
     files:
