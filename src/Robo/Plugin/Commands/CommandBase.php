@@ -245,16 +245,7 @@ class CommandBase extends \Robo\Tasks {
       $extraCommandsArray = [];
     }
     $commands = array_merge($commands, $extraCommandsArray);
-    $commandsAllowedToFailOnce = [
-      'updatedb -y'
-    ];
     foreach ($commands as $command) {
-      if (in_array($command, $commandsAllowedToFailOnce)) {
-        $this->taskExec("{$drush} {$command}")->run();
-        $index = array_search($command, $commandsAllowedToFailOnce);
-        unset($commandsAllowedToFailOnce[$index]);
-        continue;
-      }
       $execStack->exec("{$drush} " . $command);
     }
     return $execStack;
@@ -270,6 +261,20 @@ class CommandBase extends \Robo\Tasks {
   protected function allowOnlyOnLinux() {
     if (!$this->isLinuxServer()) {
       throw new TaskException(static::class, "This command is only supported by Unix environments!");
+    }
+  }
+
+  /**
+   * @param \Robo\Result $out
+   * @param string $message
+   * @param bool $allowFail
+   * @throws \Robo\Exception\TaskException
+   */
+  protected function handleFailure($out, $message, $allowFail = false) {
+    if ($out->getExitCode() != 0) {
+      if (!$allowFail) {
+          throw new TaskException($this, $message);
+      }
     }
   }
 }

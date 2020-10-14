@@ -2,6 +2,7 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
+use Robo\Exception\TaskException;
 use Robo\Robo;
 use Symfony\Component\Console\Output\NullOutput;
 
@@ -198,13 +199,14 @@ class SiteCommands extends CommandBase {
     $site = $options['site'];
     $this->validateConfig();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+    $drush = $this->drushExecutable($site);
     $commands = [];
-
     if ($this->isDrush9()) {
-      $commands[] = "state-set system.maintenance_mode TRUE";
+      $out = $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
+      $this->handleFailure($out, 'Setting maintenance mode cannot fail ...');
 
-      // Allow updatedb to fail once and execute it again after config:import.
-      $commands[] = "updatedb -y";
+      $out = $this->taskExec("{$drush} updatedb -y")->run();
+      $this->handleFailure($out, 'updatedb may fail once in first phase ...', true);
 
       $commands[] = 'cache:rebuild';
       if ($this->configSite('site.develop.config_split') === TRUE) {
