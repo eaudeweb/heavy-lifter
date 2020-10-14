@@ -65,7 +65,8 @@ class SiteCommands extends CommandBase {
       }
     }
     else {
-      $execStack->dir('docroot');
+      $drupalRoot = $this->drupalRoot();
+      $execStack->dir($drupalRoot);
       if (!empty($username)) {
         $commands[] = 'user-password ' . $username . ' --password=' . $newPassword;
       }
@@ -150,11 +151,11 @@ class SiteCommands extends CommandBase {
    */
   public function createProject($name = 'name') {
     // create name.conf
-    $docroot = $this->configSite('work.dir');
+    $projectRoot = $this->configSite('work.dir');
     $conf = "<VirtualHost *:80" . "> \n"
-      . "     DocumentRoot ". $docroot . "/" . $name . ".local/web" . "/ \n"
+      . "     DocumentRoot ". $projectRoot . "/" . $name . ".local/web" . "/ \n"
       . "     ServerName " . $name . ".local \n"
-      . "     <Directory  ". $docroot  . "/" . $name . ".local/web/> \n"
+      . "     <Directory  ". $projectRoot  . "/" . $name . ".local/web/> \n"
       . "          AllowOverride All \n"
       . "          Require all granted \n"
       . "     </Directory" . "> \n"
@@ -230,7 +231,8 @@ class SiteCommands extends CommandBase {
     }
     else {
       // Drupal 7
-      $execStack->dir('docroot');
+      $drupalRoot = $this->drupalRoot();
+      $execStack->dir($drupalRoot);
       $commands[] = 'vset maintenance_mode 1';
       // Execute the update commands
       $commands[] = 'updatedb -y';

@@ -127,6 +127,27 @@ class CommandBase extends \Robo\Tasks {
   /**
    * Find Drupal root installation.
    *
+   * For this function (and inherently DrupalFinder to work correctly) you need
+   * to properly configure project's root composer.json:
+   *
+   * <pre>
+   *    ...
+   *   "require": {
+   *     ...
+   *     "composer/installers": "^1.2",
+   *     ...
+   *   "extra": {
+   *     "installer-paths": {
+   *     "docroot/": ["type:drupal-core"],
+   *     "docroot/profiles/{$name}/": ["type:drupal-profile"],
+   *     "docroot/sites/all/drush/{$name}/": ["type:drupal-drush"],
+   *     "docroot/sites/all/libraries/{$name}/": ["type:drupal-library"],
+   *     "docroot/sites/all/modules/contrib/{$name}/": ["type:drupal-module"],
+   *     "docroot/sites/all/themes/{$name}/": ["type:drupal-theme"],
+   *   },
+   *   ...
+   * </pre>
+   *
    * @return string
    * @throws \Robo\Exception\TaskException
    */
