@@ -233,9 +233,12 @@ class SiteCommands extends CommandBase {
     else {
       // Drupal 7
       $execStack->dir('docroot');
-      $commands[] = 'vset maintenance_mode 1';
-      // Execute the update commands
-      $commands[] = 'updatedb -y';
+
+      $out = $this->taskExec("{$drush} vset maintenance_mode 1")->run();
+      $this->handleFailure($out, 'Setting maintenance mode cannot fail ...');
+
+      $out = $this->taskExec("{$drush} updatedb -y")->run();
+      $this->handleFailure($out, 'updatedb may fail once in first phase ...', true);
 
       // The 'drush locale:check' and 'drush locale:update' don't have equivalents in Drupal 7
 
