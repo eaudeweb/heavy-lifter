@@ -3,6 +3,7 @@
 namespace EauDeWeb\Robo\Plugin\Commands;
 
 
+use DrupalFinder\DrupalFinder;
 use EauDeWeb\Robo\Task\Curl\loadTasks;
 use machbarmacher\GdprDump\MysqldumpGdpr;
 use Robo\Exception\TaskException;
@@ -78,7 +79,8 @@ class SqlCommands extends CommandBase {
       }
       else {
         //Drupal 7
-        $execStack->dir('docroot');
+        $drupalRoot = $this->drupalRoot();
+        $execStack->dir($drupalRoot);
         $commands[] = 'sql-drop -y';
         $commands[] = 'sql-query --file=' . $dest;
       }
@@ -152,11 +154,12 @@ class SqlCommands extends CommandBase {
         ->option('result-file', $output);
 
     } else { // Drupal 7
+      $drupalRoot = $this->drupalRoot();
       $task = $this->taskExec($drush)
         ->rawArg('sql-dump')
         ->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history')
         ->rawArg("--result-file=$output")
-        ->dir('docroot');
+        ->dir($drupalRoot);
     }
 
     if ($options['gzip']) {

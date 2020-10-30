@@ -42,9 +42,9 @@ The installation guideline on Drupal 7 is the same as the one on Drupal 8, just 
 
 * Not all the available robo commands are available for Drupal 7 websites. (Some commands commit modifications available only to Drupal 8 websites and therefore have not been implemented/tested on Drupal 7)
 
-* All the Drupal 7 implementations have been set to be executed from the root folder of the project, because they change to the `docroot` directory by themselves. Therefore, all robo commands on Drupal 7 should be executed from the root directory of the project. 
-
 ## How to use it inside a project
+
+Note: You run all commands from the project's root folder (i.e. where you store the `web/` folder).
 
 * Copy `example.robo.yml` to `robo.yml` and customize the username and password to the ones provided by system administrator
 
