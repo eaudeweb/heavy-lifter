@@ -145,6 +145,44 @@ class SiteCommands extends CommandBase {
     $execStack->exec("composer update drupal/core webflo/drupal-core-require-dev --with-dependencies")
       ->run();
   }
+
+  /**
+   * Put the website in and out of maintenance mode.
+   *
+   * @param boolean $enable
+   *    true to put in maintenance, false to remove
+   * @param string $site
+   *    Which drupal site to use (default)
+   *
+   * @command site:maintenance
+   *
+   * @throws \Robo\Exception\TaskException
+   */
+  public function maintenanceMode($enable, $site = 'default') {
+    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
+    $drush = $this->drushExecutable($site);
+    switch (strtoupper("{$enable}")) {
+        case '1':
+        case 'ON':
+        case 'TRUE':
+            $real_mode = 1;
+            break;
+        case '0':
+        case 'OFF':
+        case 'FALSE':
+        default:
+            $real_mode = 0;
+    }
+    if ($this->isDrush9()) {
+        $execStack->exec("{$drush} state-set system.maintenance_mode {$real_mode}")
+            ->run();
+    }
+    else {
+        $execStack->exec("{$drush} vset maintenance_mode {$real_mode}")
+            ->run();
+    }
+  }
+
   /**
    * Setup for a new project
    *
