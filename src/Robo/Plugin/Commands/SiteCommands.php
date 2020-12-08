@@ -350,5 +350,26 @@ class SiteCommands extends CommandBase {
       }
     }
   }
-}
 
+  /**
+   * Show site status (pm:status).
+   *
+   * @param array $options
+   *  Command options.
+   *
+   * @command site:status
+   *
+   * @throws \Robo\Exception\TaskException
+   */
+  public function siteStatus($options = ['site' => 'default']) {
+    $this->validateConfig();
+    $site = $options['site'];
+    if ($this->isDrush9()) {
+      $this->taskExec("drush -l {$site} st")->run();
+    }
+    else {
+      $drupalRoot = $this->drupalRoot();
+      $this->taskExec("drush -l {$site} st")->dir($drupalRoot)->run();
+    }
+  }
+}
