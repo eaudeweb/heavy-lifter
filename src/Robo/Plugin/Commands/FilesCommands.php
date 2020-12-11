@@ -61,7 +61,7 @@ class FilesCommands extends CommandBase {
     $build->addTask($this->taskExec('tar')->arg('zxf')->arg($files_tar_gz)->arg('-p')->rawArg('--strip-components=1')->dir($files_dir));
     $build->addTask($this->taskExec('rm')->arg('-rf')->arg($files_tar_gz)->dir($files_dir));
     $result = $build->run();
-    $this->yell('Do not forget to check permissions on the files/*. Use "chown" to fix them.');
+    $this->yell('Do not forget to (re)set correct permissions on the files/*. Example: sudo chmod g+ws web/sites/default/files/ && sudo chmod -R g+w web/sites/default/files/ && sudo chown -R apache:john web/sites/default/files/');
     return $result;
   }
 
