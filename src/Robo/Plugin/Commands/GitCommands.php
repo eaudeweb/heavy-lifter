@@ -3,6 +3,7 @@
 namespace EauDeWeb\Robo\Plugin\Commands;
 
 use Robo\Exception\TaskException;
+use Symfony\Component\Process\Process;
 
 class GitCommands extends CommandBase {
 
@@ -42,7 +43,12 @@ class GitCommands extends CommandBase {
       $execStack->exec("rm -rf $vendorDir/drupal/coder/.git");
     }
 
-    $execStack->exec("$vendorDir/bin/phpcs --config-set installed_paths $vendorDir/drupal/coder/coder_sniffer");
+    $p = new Process("$vendorDir/bin/phpcs --config-show");
+    $p->run();
+    if (strpos($p->getOutput(), 'drupal/coder/coder_sniffer') === FALSE) {
+      $execStack->exec("$vendorDir/bin/phpcs --config-set installed_paths ../../drupal/coder/coder_sniffer");
+    }
+
     if (!file_exists("$projectDir/phpcs.xml")) {
       $execStack->exec("cp $drupalRoot/core/phpcs.xml.dist $projectDir/phpcs.xml");
     }
