@@ -1,0 +1,68 @@
+#!/bin/bash
+# PHP CodeSniffer pre-commit hook for git
+
+# path to phpcs "binary"
+PHPCS_BIN=./vendor/bin/phpcs
+
+# comma-separated list of file patterns being ignored
+# Change this line according to your needs.
+PHPCS_IGNORE=vendor/*,web/core/*,web/libraries/*,web/modules/contrib/*,/web/themes/contrib/*,/docroot/themes/contrib/*,/docroot/core/*,/docroot/libraries/*,/docroot/modules/contrib/*
+
+# egrep compatible pattern of  files to be checked
+PHPCS_FILE_PATTERN="\.(php|module|inc|install|theme|yml)$"
+
+# simple check if code sniffer is set up correctly
+if [ ! -x $PHPCS_BIN ]; then
+    echo "PHP CodeSniffer bin not found or executable -> $PHPCS_BIN"
+    exit 1
+fi
+
+# this is the magic:
+# retrieve all files in staging area that are added, modified or renamed
+# but no deletions etc
+FILES=$(git diff-index --name-only --cached --diff-filter=ACMR HEAD -- )
+
+if [ "$FILES" == "" ]; then
+    exit 0
+fi
+
+# match files against whitelist
+FILES_TO_CHECK=""
+for FILE in $FILES
+do
+    echo "$FILE" | egrep -q "$PHPCS_FILE_PATTERN"
+    RETVAL=$?
+    if [ "$RETVAL" -eq "0" ]
+    then
+        FILES_TO_CHECK="$FILES_TO_CHECK $FILE"
+    fi
+done
+
+if [ "$FILES_TO_CHECK" == "" ]; then
+    exit 0
+fi
+
+# execute the code sniffer
+if [ "$PHPCS_IGNORE" != "" ]; then
+    IGNORE="--ignore=$PHPCS_IGNORE"
+else
+    IGNORE=""
+fi
+
+STAGED_FILES=""
+for FILE in $FILES_TO_CHECK
+do
+  ID=$(git diff-index --cached HEAD $FILE | cut -d " " -f4)
+  STAGED_FILES="$STAGED_FILES $FILE"
+done
+
+# Use $PHPCS_BIN -n -s $ENCODING $IGNORE $STAGED_FILES to accept warnings
+OUTPUT=$($PHPCS_BIN -n -s $ENCODING $IGNORE $STAGED_FILES)
+RETVAL=$?
+
+# Use $PHPCS_BIN -n -s $ENCODING $IGNORE $STAGED_FILES to accept warnings
+if [ $RETVAL -ne 0 ]; then
+    echo $PHPCS_BIN -n -s $ENCODING $IGNORE $STAGED_FILES
+    echo "$OUTPUT"
+fi
+exit $RETVAL

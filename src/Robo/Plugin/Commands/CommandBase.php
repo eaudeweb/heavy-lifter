@@ -210,6 +210,27 @@ class CommandBase extends \Robo\Tasks {
   }
 
   /**
+   * @param $package
+   * @return bool
+   */
+  protected function isPackageAvailable($package) {
+    $vendorDir = $this->getVendorDir();
+    return file_exists($vendorDir . '/' . $package);
+  }
+
+  /**
+   * @return string
+   * @throws \Robo\Exception\TaskException
+   */
+  protected function getVendorDir() {
+    $drupalFinder = new \DrupalFinder\DrupalFinder();
+    if (!$drupalFinder->locateRoot(getcwd())) {
+      throw new TaskException($this, "Cannot find vendor dir.");
+    }
+    return $drupalFinder->getVendorDir();
+  }
+
+  /**
    * @param $module
    * @return string
    */
