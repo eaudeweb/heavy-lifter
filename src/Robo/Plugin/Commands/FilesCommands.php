@@ -2,15 +2,16 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
+use Exception;
 use Robo\Exception\TaskException;
+use Robo\Result;
 
 class FilesCommands extends CommandBase {
 
   /**
    * @inheritdoc
    */
-  protected function validateConfig($site = 'default') {
-    parent::validateConfig();
+  protected function validateConfig($site = 'default'): bool {
     $url = $this->configSite('files.sync.source', $site);
     if (!empty($url) && strpos($url, 'https://') !== 0) {
       throw new TaskException(
@@ -18,6 +19,7 @@ class FilesCommands extends CommandBase {
         'Files sync URL is not HTTPS, cannot send credentials over unencrypted connection to: ' . $url
       );
     }
+    return parent::validateConfig();
   }
 
   /**
@@ -27,10 +29,10 @@ class FilesCommands extends CommandBase {
    *
    * @param array $options
    *  Command options.
-   * @return null|\Robo\Result
-   * @throws \Exception when cannot find the Drupal installation folder.
+   * @return null|Result
+   * @throws Exception when cannot find the Drupal installation folder.
    */
-  public function filesSync($options = ['site' => 'default']) {
+  public function filesSync($options = ['site' => 'default']): ?Result {
     $this->allowOnlyOnLinux();
     $site = $options['site'];
 
@@ -65,17 +67,18 @@ class FilesCommands extends CommandBase {
     return $result;
   }
 
-  /**
-   * Create archive with files directory to the given path.
-   *
-   * @command files:archive
-   *
-   * @param array $options
-   *  Command options.
-   * @return null|\Robo\Result
-   * @throws \Robo\Exception\TaskException when output path is not absolute
-   */
-  public function filesDump($output = '', $options = ['site' => 'default']) {
+    /**
+     * Create archive with files directory to the given path.
+     *
+     * @command files:archive
+     *
+     * @param string $output
+     * @param array $options
+     *  Command options.
+     * @return null|Result
+     * @throws TaskException when output path is not absolute
+     */
+  public function filesDump(string $output = '', $options = ['site' => 'default']): ?Result {
     $this->allowOnlyOnLinux();
     $site = $options['site'];
 

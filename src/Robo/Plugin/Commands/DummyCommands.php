@@ -3,6 +3,8 @@
 namespace EauDeWeb\Robo\Plugin\Commands;
 
 
+use Robo\Exception\TaskException;
+
 class DummyCommands extends CommandBase {
 
   /**
@@ -10,7 +12,7 @@ class DummyCommands extends CommandBase {
    *
    * @command do:nothing
    *
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
   public function doNothing() {
     $this->validateConfig();

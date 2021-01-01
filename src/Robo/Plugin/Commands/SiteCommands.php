@@ -2,7 +2,11 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
+use EauDeWeb\Robo\Task\Curl\loadTasks;
+use Exception;
+use ReflectionClass;
 use Robo\Exception\TaskException;
+use Robo\Result;
 use Robo\Robo;
 use Symfony\Component\Console\Output\NullOutput;
 
@@ -13,13 +17,12 @@ use Symfony\Component\Console\Output\NullOutput;
  */
 class SiteCommands extends CommandBase {
 
-  use \Boedah\Robo\Task\Drush\loadTasks;
-  use \EauDeWeb\Robo\Task\Curl\loadTasks;
+  use loadTasks;
 
   /**
    * @inheritdoc
    */
-  protected function validateConfig() {
+  protected function validateConfig() : void {
     parent::validateConfig();
   }
 
@@ -31,7 +34,7 @@ class SiteCommands extends CommandBase {
    * @param string $newPassword
    * @param array $options
    *  Command options.
-   * @throws \Exception when cannot find the Drupal installation folder.
+   * @throws Exception when cannot find the Drupal installation folder.
    */
   public function siteDevelop($newPassword = 'password', $options = ['site' => 'default']) {
     $this->allowOnlyOnLinux();
@@ -89,10 +92,10 @@ class SiteCommands extends CommandBase {
   /**
    * @param array $options
    *  Command options.
-   * @return \Robo\Result
-   * @throws \Robo\Exception\TaskException
+   * @return Result
+   * @throws TaskException
    */
-  public function siteInstall($options = ['site' => 'default']) {
+  public function siteInstall($options = ['site' => 'default']) : Result {
     $this->allowOnlyOnLinux();
     $site = $options['site'];
     $url =  $this->configSite('sql.sync.source', $site);
@@ -134,12 +137,13 @@ class SiteCommands extends CommandBase {
     return $download;
   }
 
-  /**
-   * Update Drupal core. Check that "drupal/core:^8.7" and
-   * "webflo/drupal-core-require-dev:^8.7" exist in composer.json declaration.
-   *
-   * @command core:update
-   */
+    /**
+     * Update Drupal core. Check that "drupal/core:^8.7" and
+     * "webflo/drupal-core-require-dev:^8.7" exist in composer.json declaration.
+     *
+     * @command core:update
+     * @throws TaskException
+     */
   public function coreUpdate() {
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $execStack->exec("composer update drupal/core webflo/drupal-core-require-dev --with-dependencies")
@@ -156,9 +160,9 @@ class SiteCommands extends CommandBase {
    *
    * @command site:maintenance
    *
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
-  public function maintenanceMode($enable, $site = 'default') {
+  public function maintenanceMode(bool $enable, $site = 'default') {
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $drush = $this->drushExecutable($site);
     switch (strtoupper("{$enable}")) {
@@ -183,12 +187,16 @@ class SiteCommands extends CommandBase {
     }
   }
 
-  /**
-   * Setup for a new project
-   *
-   * @command project:create
-   */
-  public function createProject($name = 'name') {
+    /**
+     * Setup for a new project
+     *
+     * @param string $name
+     *   Project name.
+     *
+     * @command project:create
+     * @throws TaskException
+     */
+  public function createProject(string $name = 'name') {
     // create name.conf
     $projectRoot = $this->configSite('work.dir');
     $conf = "<VirtualHost *:80" . "> \n"
@@ -230,10 +238,10 @@ class SiteCommands extends CommandBase {
    * @param array $options
    *  Command options.
    *
-   * @return null|\Robo\Result
-   * @throws \Robo\Exception\TaskException
+   * @return null|Result
+   * @throws TaskException
    */
-  public function siteUpdate($options = ['site' => 'default']) {
+  public function siteUpdate($options = ['site' => 'default']) : Result {
     $this->allowOnlyOnLinux();
     $site = $options['site'];
     $this->validateConfig();
@@ -295,15 +303,14 @@ class SiteCommands extends CommandBase {
     return $execStack->run();
   }
 
-  /**
-   * Create new configuration file.
-   *
-   * @command site:config
-   *
-   * @throws \ReflectionException
-   */
+    /**
+     * Create new configuration file.
+     *
+     * @command site:config
+     * @throws Exception
+     */
   public function siteConfig() {
-    $reflector = new \ReflectionClass('EauDeWeb\Robo\Plugin\Commands\SiteCommands');
+    $reflector = new ReflectionClass('EauDeWeb\Robo\Plugin\Commands\SiteCommands');
     if ($source = realpath(dirname($reflector->getFileName()) . '/../../../../example.robo.yml')) {
       // example.robo.yml
       $dest = $this->projectDir() . DIRECTORY_SEPARATOR . 'example.robo.yml';
@@ -359,7 +366,7 @@ class SiteCommands extends CommandBase {
    *
    * @command site:status
    *
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
   public function siteStatus($options = ['site' => 'default']) {
     $this->validateConfig();

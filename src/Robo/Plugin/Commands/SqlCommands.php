@@ -3,7 +3,6 @@
 namespace EauDeWeb\Robo\Plugin\Commands;
 
 
-use DrupalFinder\DrupalFinder;
 use EauDeWeb\Robo\Task\Curl\loadTasks;
 use machbarmacher\GdprDump\MysqldumpGdpr;
 use Robo\Exception\TaskException;
@@ -12,8 +11,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class SqlCommands extends CommandBase {
 
-  use \Boedah\Robo\Task\Drush\loadTasks;
-  use \EauDeWeb\Robo\Task\Curl\loadTasks;
+  use loadTasks;
 
   /**
    * Download the database dump from the remote storage, without importing it.

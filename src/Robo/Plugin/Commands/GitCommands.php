@@ -21,7 +21,7 @@ class GitCommands extends CommandBase {
    * @usage --disable
    *   Disable the phpcs git pre-commit hook.
    *
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
   public function gitPhpcsPrecommit($options = ['disable' => FALSE, 'accept-warnings' => FALSE]) {
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);

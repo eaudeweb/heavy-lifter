@@ -3,25 +3,29 @@
  * @file CommandBase.php
  */
 namespace EauDeWeb\Robo\Plugin\Commands;
+
+use DrupalFinder\DrupalFinder;
 use Robo\Collection\CollectionBuilder;
 use Robo\Exception\TaskException;
+use Robo\Result;
 use Robo\Robo;
+use Robo\Tasks;
 use Symfony\Component\Process\Process;
 /**
  * Class CommandBase for other commands.
  *
  * @package EauDeWeb\Robo\Plugin\Commands
  */
-class CommandBase extends \Robo\Tasks {
+class CommandBase extends Tasks {
 
   const FILE_FORMAT_VERSION = '3.0';
 
   /**
    * Check configuration file consistency.
    *
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
-  protected function validateConfig() {
+  protected function validateConfig(): bool {
     $version = $this->config('version');
     if (empty($version)) {
       throw new TaskException(
@@ -42,9 +46,9 @@ class CommandBase extends \Robo\Tasks {
    * Validate the URL is https
    * @param string $url
    *
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
-  protected function validateHttpsUrl($url) {
+  protected function validateHttpsUrl(string $url) : void {
     if (strpos($url, 'https://') !== 0) {
       throw new TaskException($this, 'URL is not HTTPS: ' . $url);
     }
@@ -57,21 +61,21 @@ class CommandBase extends \Robo\Tasks {
    *
    * @return mixed
    */
-  protected function config($key) {
+  protected function config(string $key) {
     $config = Robo::config();
     return $config->get($key);
   }
 
-  /**
-   * Get configuration value.
-   *
-   * @param string $key
-   * @param string $site
-   *   Site config key from the config file (e.g. sites.default.sql.username).
-   *
-   * @return null|mixed
-   */
-  protected function configSite($key, $site = 'default') {
+    /**
+     * Get configuration value.
+     *
+     * @param string $key
+     * @param string $site
+     *   Site config key from the config file (e.g. sites.default.sql.username).
+     *
+     * @return null|mixed
+     */
+  protected function configSite(string $key, $site = 'default') {
     $config = Robo::config();
     $full = 'sites.' . $site . '.' . $key;
     $value = $config->get($full);
@@ -86,7 +90,8 @@ class CommandBase extends \Robo\Tasks {
    *
    * @return string
    */
-  protected function tmpDir() {
+  protected function tmpDir(): string
+  {
     return sys_get_temp_dir();
   }
 
@@ -95,7 +100,8 @@ class CommandBase extends \Robo\Tasks {
    *
    * @return string
    */
-  protected function projectDir() {
+  protected function projectDir(): string
+  {
     return getcwd();
   }
 
@@ -103,12 +109,11 @@ class CommandBase extends \Robo\Tasks {
    * Return absolute path to drush executable.
    *
    * @param string $site
-   * @param string $useSite
    * @return string
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
-  protected function drushExecutable($site = 'default') {
-    /** @TODO Windows / Windows+BASH / WinBash / Cygwind not tested */
+  protected function drushExecutable($site = 'default') : string {
+    /** @TODO Windows / Windows+BASH / WinBash / Cygwin not tested */
     if (realpath(getcwd() . '/vendor/bin/drush') && $this->isLinuxServer()) {
       if ($site != 'default') {
         return realpath(getcwd() . '/vendor/bin/drush') . ' -l ' . $site;
@@ -138,21 +143,20 @@ class CommandBase extends \Robo\Tasks {
    *     ...
    *   "extra": {
    *     "installer-paths": {
-   *     "docroot/": ["type:drupal-core"],
-   *     "docroot/profiles/{$name}/": ["type:drupal-profile"],
-   *     "docroot/sites/all/drush/{$name}/": ["type:drupal-drush"],
-   *     "docroot/sites/all/libraries/{$name}/": ["type:drupal-library"],
-   *     "docroot/sites/all/modules/contrib/{$name}/": ["type:drupal-module"],
-   *     "docroot/sites/all/themes/{$name}/": ["type:drupal-theme"],
+   *     "web/": ["type:drupal-core"],
+   *     "web/profiles/{$name}/": ["type:drupal-profile"],
+   *     "web/libraries/{$name}/": ["type:drupal-library"],
+   *     "web/modules/contrib/{$name}/": ["type:drupal-module"],
+   *     "web/themes/{$name}/": ["type:drupal-theme"],
    *   },
    *   ...
    * </pre>
    *
    * @return string
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
-  protected function drupalRoot() {
-    $drupalFinder = new \DrupalFinder\DrupalFinder();
+  protected function drupalRoot() : string {
+    $drupalFinder = new DrupalFinder();
     if ($drupalFinder->locateRoot(getcwd())) {
       return $drupalFinder->getDrupalRoot();
     }
@@ -164,8 +168,7 @@ class CommandBase extends \Robo\Tasks {
   /**
    * Detect drush version.
    *
-   * @param string $site
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
   protected function getDrushVersion() {
     $drush = $this->drushExecutable();
@@ -189,62 +192,67 @@ class CommandBase extends \Robo\Tasks {
   }
 
   /**
-   * @param string $site
    * @return bool
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
-  protected function isDrush9() {
+  protected function isDrush9(): bool
+  {
     $drushVersion = $this->getDrushVersion();
     return version_compare($drushVersion, '9') >= 0;
   }
 
-  /**
-   * @param $module
-   * @return bool
-   */
-  protected function isModuleEnabled($module) {
+    /**
+     * @param $module
+     * @return bool
+     * @throws TaskException
+     */
+  protected function isModuleEnabled($module) : bool {
     $drush = $this->drushExecutable();
-    $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
+    $p = new Process(["$drush pml --type=module --status=enabled | grep '($module)'"]);
     $p->run();
     return !empty($p->getOutput());
   }
 
-  /**
-   * @param $package
-   * @return bool
-   */
-  protected function isPackageAvailable($package) {
+    /**
+     * @param $package
+     * @return bool
+     * @throws TaskException
+     */
+  protected function isPackageAvailable($package) : bool {
     $vendorDir = $this->getVendorDir();
     return file_exists($vendorDir . '/' . $package);
   }
 
   /**
    * @return string
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
-  protected function getVendorDir() {
-    $drupalFinder = new \DrupalFinder\DrupalFinder();
+  protected function getVendorDir(): string {
+    $drupalFinder = new DrupalFinder();
     if (!$drupalFinder->locateRoot(getcwd())) {
       throw new TaskException($this, "Cannot find vendor dir.");
     }
     return $drupalFinder->getVendorDir();
   }
 
-  /**
-   * @param $module
-   * @return string
-   */
-  protected function getModuleInfo($module) {
+    /**
+     * @param $module
+     * @return string
+     * @throws TaskException
+     */
+  protected function getModuleInfo($module): string
+  {
     $drush = $this->drushExecutable();
-    $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
+    $p = new Process(["$drush pml --type=module --status=enabled | grep '($module)'"]);
     $p->run();
     return $p->getOutput();
   }
 
-  /**
-   * @param CollectionBuilder $execStack
-   * @param $phase
-   */
+    /**
+     * @param CollectionBuilder $execStack
+     * @param $phase
+     * @throws TaskException
+     */
   protected function addDrushScriptsToExecStack(CollectionBuilder $execStack, $phase) {
     $drush = $this->drushExecutable();
     $drupal = $this->isDrush9() ? 'drupal8' : 'drupal7';
@@ -267,9 +275,16 @@ class CommandBase extends \Robo\Tasks {
     }
   }
 
-  /**
-   * Update the drush execution stack according to robo.yml specifications.
-   */
+    /**
+     * Update the drush execution stack according to robo.yml specifications.
+     * @param $execStack
+     * @param $commands
+     * @param array $excludedCommandsArray
+     * @param array $extraCommandsArray
+     * @param string $site
+     * @return mixed
+     * @throws TaskException
+     */
   protected function updateDrushCommandStack($execStack, $commands, $excludedCommandsArray = [], $extraCommandsArray = [], $site = 'default') {
     $drush = $this->drushExecutable($site);
     if (!empty($excludedCommandsArray)) {
@@ -293,12 +308,12 @@ class CommandBase extends \Robo\Tasks {
     return $execStack;
   }
 
-  protected function isLinuxServer() {
+  protected function isLinuxServer() : bool {
     return strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN';
   }
 
   /**
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
   protected function allowOnlyOnLinux() {
     if (!$this->isLinuxServer()) {
@@ -307,12 +322,12 @@ class CommandBase extends \Robo\Tasks {
   }
 
   /**
-   * @param \Robo\Result $out
+   * @param Result $out
    * @param string $message
    * @param bool $allowFail
-   * @throws \Robo\Exception\TaskException
+   * @throws TaskException
    */
-  protected function handleFailure($out, $message, $allowFail = false) {
+  protected function handleFailure(Result $out, string $message, $allowFail = false) {
     if ($out->getExitCode() != 0) {
       if (!$allowFail) {
           throw new TaskException($this, $message);
