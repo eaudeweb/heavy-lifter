@@ -391,7 +391,7 @@ class CommandBase extends \Robo\Tasks {
     $query->fields('u', ['fid', 'type', 'id', 'count']);
     $files_in_use = $query->execute()->fetchAll();
 
-    //Files recorded in files_managed but are not recored in files_usage
+    //Files recorded in files_managed but are not recorded in files_usage
     $query = $drupalDatabase->select('file_managed', 'm');
     $query->leftJoin('file_usage', 'u', 'm.fid=u.fid');
     $query->fields('m', ['fid', 'uri']);
@@ -438,7 +438,7 @@ class CommandBase extends \Robo\Tasks {
       if (file_exists($path)) {
         continue;
       }
-      //If file missing then item will be missing & orphan
+      //If file missing and is orphan, then item will be missing & orphan
       if (in_array($row->fid, $orphans_fids)) {
         $problem[$row->fid] = [
           'fid' => $row->fid,
@@ -474,23 +474,23 @@ class CommandBase extends \Robo\Tasks {
   }
 
   /**
-   * Return an array[type|string ids] with entities where file is usage and
-   * count.
+   * Prepare an array[type|string ids] with entities where file is usage.
    *
    * @param $usage
    *
    * @return array
-   *   Return a string with information about file and
+   *   Return a string with information about file and the count
    */
   protected function getlistUsage($usage) {
     $references = [];
     $count = 0;
     //Parse each value and group by type because a file can be used for more
-    //types and entities by this type
+    //types and also more entities can use the same type
     foreach ($usage as $item) {
       $count += $item->count;
       //If type is paragraph, search by the parent type (e.g. node). If first
-      //parent type is also paragraph, search until find the visible parent
+      //parent type is also paragraph, search until find the visible parent (e.g
+      //node, taxonomy_term, media.
       if ($item->type == 'paragraph') {
         if (!empty(list($parent_type, $parent_id) = $this->getParagraphParentType($item->id))) {
           $references['paragraph'][] = sprintf("used in %s: %s", $parent_type, $parent_id);
@@ -519,7 +519,7 @@ class CommandBase extends \Robo\Tasks {
       }
       return [$parent_type, $parent_id];
     } else {
-      $this->yell(sprintf('Paragraph id %s not found. Skiped', $id), 'yellow');
+      $this->yell(sprintf('Paragraph id %s not found. Skipped', $id), 'yellow');
       return null;
     }
   }
