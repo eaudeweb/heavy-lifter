@@ -2,7 +2,13 @@
 
 namespace EauDeWeb\Robo\Plugin\Commands;
 
+use Drush\Drush;
+use PhpOffice\PhpSpreadsheet\Calculation\Database;
 use Robo\Exception\TaskException;
+use Robo\Robo;
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Process\Process;
 
 class FilesCommands extends CommandBase {
 
@@ -107,5 +113,57 @@ class FilesCommands extends CommandBase {
         ->dir($files_dir)
     );
     return $build->run();
+  }
+
+  /**
+   * Get integrity of files recorded in file_managed but they're missing from
+   * disk or recorded in file_managed with no record in file_usage.
+   * Use option limit to interrogate a limited number of records from tables.
+   *
+   * @command files:integrity-check
+
+   * @param array $options
+   *  Command options.
+   * @return null|\Robo\Result
+   * @throws \Robo\Exception\TaskException when output path is not absolute
+   */
+  public function checkIntegrity($options = ['limit' => NULL, 'site' => 'default']) {
+    if (!$this->isDrush9()) {
+      throw new \Exception('Need drupal 8');
+      return FALSE;
+    }
+    $this->allowOnlyOnLinux();
+
+    $site = $options['site'];
+    $limit = $options['limit'];
+    $output = $this->getIntegrityFiles($limit, $site);
+    $missing = $output['missing'];
+    $orphans = $output['orphan'];
+    $final_records = [];
+    foreach ($output['problem'] as $row) {
+      $final_records[$row['fid']] = $row;
+    }
+    foreach (array_merge($missing, $orphans) as $row) {
+      $final_records[$row['fid']] = [
+        'fid' => $row['fid'],
+        'uri' => $row['uri'],
+        'problem' => $row['problem'],
+        'count' => $row['count'],
+        'usage' => !empty($row['usage']) ? $row['usage'] : '',
+      ];
+    }
+
+    //Create the output table
+    echo "M = File recorded in file_managed but missing from disk\nO = File recorded in file_managed by no record in file_usage\n";
+    $output = new BufferedOutput();
+    $tbl = new Table($output);
+    $tbl->setHeaders(["FID", "Path", "Problem", "Count", "Usage"]);
+    $tbl->setColumnWidths([7, 10, 4, 2, 10]);
+    $tbl->setRows($final_records);
+    $tbl->render();
+    $tbl = $output->fetch();
+    $tbl_lines = substr_count($tbl, "\n");
+    $this->output->write($tbl);
+    echo "M = File recorded in file_managed but missing from disk\nO = File recorded in file_managed by no record in file_usage\n";
   }
 }

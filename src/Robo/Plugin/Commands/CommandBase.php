@@ -3,9 +3,12 @@
  * @file CommandBase.php
  */
 namespace EauDeWeb\Robo\Plugin\Commands;
+use Drupal\Core\DrupalKernel;
+use Drupal\paragraphs\Entity\Paragraph;
 use Robo\Collection\CollectionBuilder;
 use Robo\Exception\TaskException;
 use Robo\Robo;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Process\Process;
 /**
  * Class CommandBase for other commands.
@@ -318,5 +321,143 @@ class CommandBase extends \Robo\Tasks {
           throw new TaskException($this, $message);
       }
     }
+  }
+
+  /**
+   * Boots up a Drupal environment.
+   *
+   * @param $uri
+   * @param string $environment
+   *
+   * @throws \Exception
+   */
+  protected function drupalBoot($uri, $environment = 'prod') {
+    $uri = rtrim($uri, '/') . '/';
+    if (strpos($uri, 'http://') === FALSE && strpos($uri, 'https://') === FALSE) {
+      $uri = 'http://' . $uri;
+    }
+    $parsed_url = parse_url($uri);
+
+    $server = [
+      'SCRIPT_FILENAME' => getcwd() . '/index.php',
+      'SCRIPT_NAME' => isset($parsed_url['path']) ? $parsed_url['path'] . 'index.php' : '/index.php',
+    ];
+    $class_loader = require 'vendor/autoload.php';
+    $request = Request::create($uri, 'GET', [], [], [], $server);
+    $kernel = DrupalKernel::createFromRequest($request, $class_loader, $environment);
+    $kernel->boot();
+    $kernel->prepareLegacyRequest($request);
+    $container = $kernel->getContainer();
+    /** @var \Drupal\Core\Database\Database $drupalDatabase */
+    $this->drupalDatabase = $container->get('database');
+    $this->settings = $container->get('settings');
+  }
+
+  /**
+   * Get integrity of files recorded in file_managed but they're missing from
+   * disk or recorded in file_managed with no record in file_usage.
+   *
+   * @param string $limit
+   * @param string $site
+   *
+   * @return array
+   * @throws \Robo\Exception\TaskException
+   */
+
+  protected function getIntegrityFiles($limit = '', $site = 'default') {
+    $drupalRoot = $this->drupalRoot();
+    $this->drupalBoot($site, 'prod');
+    $this->yell(sprintf("Start to search in %s database", $this->drupalDatabase->getConnectionOptions()['database']));
+
+    $files_path = 'sites/' . $site . '/files';
+    $limit = !empty($limit) ? sprintf(" limit %s", $limit) : "";
+
+    $file_managed = $this->drupalDatabase->query("select fid, uri from file_managed {$limit}")->fetchAll();
+    $usage = $this->drupalDatabase->query("select u.fid, type, u.id, u.count as count from file_managed as m inner join file_usage as u on u.fid = m.fid group by fid, type, u.id, u.count")->fetchAll();
+    $file_usage = $this->drupalDatabase->query("select m.fid as fid, m.uri as uri from file_managed as m left join file_usage as u on m.fid=u.fid where count is null {$limit}")->fetchAll();
+
+    $missing = $problem = $orphans = [];
+    foreach ($file_usage as $row) {
+      $orphans[$row->fid] = [
+        'fid' => $row->fid,
+        'uri' => $row->uri,
+        'problem' => 'O',
+        'count' => 'n/a',
+      ];
+    }
+    echo sprintf("Processed: %04d/%d\n", count($file_usage), count($file_usage+$file_managed+$usage));
+
+    $orphans_fids = array_column($file_usage, 'fid');
+    $arr = [];
+    foreach ($usage as $key => $item) {
+      $arr[$item->fid][$key] = $item;
+    }
+    $usage = $arr;
+    ksort($usage, SORT_NUMERIC);
+
+    $i = count($file_usage);
+    foreach ($file_managed as $row) {
+      if (strpos($row->uri, 'public://') === 0) {
+        $director = str_replace('public://', '', $row->uri);
+        $path = sprintf('%s/%s/%s', $drupalRoot, $files_path, $director);
+      }
+      if (strpos($row->uri, 'private://') === 0) {
+        $director = str_replace('private://', '', $row->uri);
+        $path = sprintf('%s/%s', $this->settings->get('file_private_path'), $director);
+      }
+      if (file_exists($path)) {
+        continue;
+      }
+      if (in_array($row->fid, $orphans_fids)) {
+        $problem[$row->fid] = [
+          'fid' => $row->fid,
+          'uri' => $row->uri,
+          'problem' => 'M/O',
+          'count' => 'n/a',
+          'usage' => '',
+        ];
+        unset($orphans[$row->fid]);
+        continue;
+      }
+      $htmlUsage = [];
+      $count = 0;
+      if (!empty($usage[$row->fid])) {
+        foreach ($usage[$row->fid] as $item) {
+          $count += $item->count;
+          if ($item->type == 'paragraph') {
+            /** @var Paragraph $paragraph */
+            $paragraph = Paragraph::load($item->id);
+            $parent_type = $paragraph->get('parent_type')->value;
+            $parent_id = $paragraph->get('parent_id')->value;
+            $htmlUsage[$item->type][] = sprintf("used in %s: %s", $parent_type, $parent_id);
+            continue;
+          }
+          $htmlUsage[$item->type][] = sprintf("%s", $item->id);
+        }
+        $html = NULL;
+        foreach ($htmlUsage as $type => $items) {
+          $ids = implode(', ', $items);
+          $htmlUsage[$type] = sprintf("%s(s): %s", $type, $ids);
+        }
+        $htmlUsage = array_values($htmlUsage);
+      }
+      $missing[$row->fid] = [
+        'fid' => $row->fid,
+        'uri' => $row->uri,
+        'problem' => 'M',
+        'count' => $count,
+        'usage' => !empty($htmlUsage) ? implode(',' , $htmlUsage) : '',
+      ];
+
+      if (++$i % 5000 == 0) {
+        echo sprintf("Processed: %04d/%d\n", $i, count($file_usage+$file_managed+$usage));
+      }
+    }
+
+    return [
+      'missing' => $missing,
+      'orphan' => $orphans,
+      'problem' => $problem,
+    ];
   }
 }
