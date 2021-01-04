@@ -371,8 +371,6 @@ class CommandBase extends \Robo\Tasks {
 
     /** @var \Drupal\Core\Database\Database $drupalDatabase */
     $drupalDatabase = $container->get('database');
-    /** @var \Drupal\Core\Site\Settings $settings */
-    $settings = $container->get('settings');
     /** @var \Drupal\Core\File\FileSystemInterface $file_system */
     $file_system = $container->get('file_system');
     /** @var \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $stream_wrapper_manager */
