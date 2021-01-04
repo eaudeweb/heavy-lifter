@@ -4,6 +4,7 @@
  */
 namespace EauDeWeb\Robo\Plugin\Commands;
 use Drupal\Core\DrupalKernel;
+use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\paragraphs\Entity\Paragraph;
 use Robo\Collection\CollectionBuilder;
 use Robo\Exception\TaskException;
@@ -331,7 +332,7 @@ class CommandBase extends \Robo\Tasks {
    *
    * @throws \Exception
    */
-  protected function drupalBoot($uri, $environment = 'prod') {
+  public static function drupalBoot($uri, $environment = 'prod') {
     $uri = rtrim($uri, '/') . '/';
     if (strpos($uri, 'http://') === FALSE && strpos($uri, 'https://') === FALSE) {
       $uri = 'http://' . $uri;
@@ -348,9 +349,8 @@ class CommandBase extends \Robo\Tasks {
     $kernel->boot();
     $kernel->prepareLegacyRequest($request);
     $container = $kernel->getContainer();
-    /** @var \Drupal\Core\Database\Database $drupalDatabase */
-    $this->drupalDatabase = $container->get('database');
-    $this->settings = $container->get('settings');
+
+    return $container;
   }
 
   /**
@@ -358,6 +358,7 @@ class CommandBase extends \Robo\Tasks {
    * disk or recorded in file_managed with no record in file_usage.
    *
    * @param string $limit
+   *  Use option $limit to interrogate a limited number of records from tables.
    * @param string $site
    *
    * @return array
@@ -366,18 +367,47 @@ class CommandBase extends \Robo\Tasks {
 
   protected function getIntegrityFiles($limit = '', $site = 'default') {
     $drupalRoot = $this->drupalRoot();
-    $this->drupalBoot($site, 'prod');
-    $this->yell(sprintf("Start to search in %s database", $this->drupalDatabase->getConnectionOptions()['database']));
+    $container = self::drupalBoot($site, 'prod');
 
-    $files_path = 'sites/' . $site . '/files';
-    $limit = !empty($limit) ? sprintf(" limit %s", $limit) : "";
+    /** @var \Drupal\Core\Database\Database $drupalDatabase */
+    $drupalDatabase = $container->get('database');
+    /** @var \Drupal\Core\Site\Settings $settings */
+    $settings = $container->get('settings');
+    /** @var \Drupal\Core\File\FileSystemInterface $file_system */
+    $file_system = $container->get('file_system');
+    /** @var \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $stream_wrapper_manager */
+    $stream_wrapper_manager = $container->get('stream_wrapper_manager');
 
-    $file_managed = $this->drupalDatabase->query("select fid, uri from file_managed {$limit}")->fetchAll();
-    $usage = $this->drupalDatabase->query("select u.fid, type, u.id, u.count as count from file_managed as m inner join file_usage as u on u.fid = m.fid group by fid, type, u.id, u.count")->fetchAll();
-    $file_usage = $this->drupalDatabase->query("select m.fid as fid, m.uri as uri from file_managed as m left join file_usage as u on m.fid=u.fid where count is null {$limit}")->fetchAll();
+    $this->yell(sprintf("Start to search in %s database", $drupalDatabase->getConnectionOptions()['database']));
+
+    //Files recorded in files_managed
+    $query = $drupalDatabase->select('file_managed', 'f')->fields('f', ['fid', 'uri'])->condition('status', 1);
+    if (!empty($limit)) {
+      $query = $query->range(0, $limit);
+    }
+    $file_managed = $query->execute()->fetchAll();
+
+    //Files recorded in file_managed & file_usage
+    $query = $drupalDatabase->select('file_managed', 'm');
+    $query->innerJoin('file_usage', 'u', 'u.fid = m.fid');
+    $query->fields('u', ['fid', 'type', 'id', 'count']);
+    $files_in_use = $query->execute()->fetchAll();
+
+    //Files recorded in files_managed but are not recored in files_usage
+    $query = $drupalDatabase->select('file_managed', 'm');
+    $query->leftJoin('file_usage', 'u', 'm.fid=u.fid');
+    $query->fields('m', ['fid', 'uri']);
+    $query->isNull('u.count');
+    if (!empty($limit)) {
+      $query = $query->range(0, $limit);
+    }
+    $files_not_in_use = $query->execute()->fetchAll();
+
+    $total = count($files_not_in_use) + count($file_managed);
 
     $missing = $problem = $orphans = [];
-    foreach ($file_usage as $row) {
+    //list with orphans
+    foreach ($files_not_in_use as $row) {
       $orphans[$row->fid] = [
         'fid' => $row->fid,
         'uri' => $row->uri,
@@ -385,29 +415,32 @@ class CommandBase extends \Robo\Tasks {
         'count' => 'n/a',
       ];
     }
-    echo sprintf("Processed: %04d/%d\n", count($file_usage), count($file_usage+$file_managed+$usage));
+    echo sprintf("Processed: %04d/%d\n", count($files_not_in_use), $total);
 
-    $orphans_fids = array_column($file_usage, 'fid');
+    //Group records from file_usage table by fid
     $arr = [];
-    foreach ($usage as $key => $item) {
+    foreach ($files_in_use as $key => $item) {
       $arr[$item->fid][$key] = $item;
     }
-    $usage = $arr;
-    ksort($usage, SORT_NUMERIC);
+    $files_in_use = $arr;
+    ksort($files_in_use, SORT_NUMERIC);
 
-    $i = count($file_usage);
+    $i = count($files_not_in_use);
+    $orphans_fids = array_column($files_not_in_use, 'fid');
     foreach ($file_managed as $row) {
-      if (strpos($row->uri, 'public://') === 0) {
-        $director = str_replace('public://', '', $row->uri);
-        $path = sprintf('%s/%s/%s', $drupalRoot, $files_path, $director);
-      }
-      if (strpos($row->uri, 'private://') === 0) {
-        $director = str_replace('private://', '', $row->uri);
-        $path = sprintf('%s/%s', $this->settings->get('file_private_path'), $director);
+      //Get path
+      $scheme = $file_system->uriScheme($row->uri);
+      /** @var \Drupal\Core\StreamWrapper\PublicStream $wrapper */
+      $wrapper = $stream_wrapper_manager->getViaScheme($scheme);
+      if (\Drupal::VERSION > '8.8.0') {
+        $path = $drupalRoot . '/' . $wrapper->getDirectoryPath() . '/' . $stream_wrapper_manager::getTarget($row->uri);
+      } else {
+        $path = $drupalRoot . '/' . $wrapper->getDirectoryPath() . '/' . file_uri_target($row->uri);
       }
       if (file_exists($path)) {
         continue;
       }
+      //If file missing then item will be missing & orphan
       if (in_array($row->fid, $orphans_fids)) {
         $problem[$row->fid] = [
           'fid' => $row->fid,
@@ -416,48 +449,80 @@ class CommandBase extends \Robo\Tasks {
           'count' => 'n/a',
           'usage' => '',
         ];
+        //and unset from orphans list
         unset($orphans[$row->fid]);
         continue;
       }
-      $htmlUsage = [];
       $count = 0;
-      if (!empty($usage[$row->fid])) {
-        foreach ($usage[$row->fid] as $item) {
-          $count += $item->count;
-          if ($item->type == 'paragraph') {
-            /** @var Paragraph $paragraph */
-            $paragraph = Paragraph::load($item->id);
-            $parent_type = $paragraph->get('parent_type')->value;
-            $parent_id = $paragraph->get('parent_id')->value;
-            $htmlUsage[$item->type][] = sprintf("used in %s: %s", $parent_type, $parent_id);
-            continue;
-          }
-          $htmlUsage[$item->type][] = sprintf("%s", $item->id);
-        }
-        $html = NULL;
-        foreach ($htmlUsage as $type => $items) {
-          $ids = implode(', ', $items);
-          $htmlUsage[$type] = sprintf("%s(s): %s", $type, $ids);
-        }
-        $htmlUsage = array_values($htmlUsage);
+      //If file exist and is used, prepare the array
+      if (!empty($files_in_use[$row->fid])) {
+        list($references, $count) = $this->getlistUsage($files_in_use[$row->fid]);
       }
       $missing[$row->fid] = [
         'fid' => $row->fid,
         'uri' => $row->uri,
         'problem' => 'M',
         'count' => $count,
-        'usage' => !empty($htmlUsage) ? implode(',' , $htmlUsage) : '',
+        'usage' => implode(',' , $references),
       ];
 
       if (++$i % 5000 == 0) {
-        echo sprintf("Processed: %04d/%d\n", $i, count($file_usage+$file_managed+$usage));
+        echo sprintf("Processed: %04d/%d\n", $i, $total);
       }
     }
 
-    return [
-      'missing' => $missing,
-      'orphan' => $orphans,
-      'problem' => $problem,
-    ];
+    echo "Done\n";
+    return [$missing, $orphans, $problem];
+  }
+
+  /**
+   * Return an array[type|string ids] with entities where file is usage and
+   * count.
+   *
+   * @param $usage
+   *
+   * @return array
+   *   Return a string with information about file and
+   */
+  protected function getlistUsage($usage) {
+    $references = [];
+    $count = 0;
+    //Parse each value and group by type because a file can be used for more
+    //types and entities by this type
+    foreach ($usage as $item) {
+      $count += $item->count;
+      //If type is paragraph, search by the parent type (e.g. node). If first
+      //parent type is also paragraph, search until find the visible parent
+      if ($item->type == 'paragraph') {
+        if (!empty(list($parent_type, $parent_id) = $this->getParagraphParentType($item->id))) {
+          $references['paragraph'][] = sprintf("used in %s: %s", $parent_type, $parent_id);
+        }
+        continue;
+      }
+      $references[$item->type][] = sprintf("%s", $item->id);
+    }
+    foreach ($references as $type => $items) {
+      $ids = implode(', ', $items);
+      $references[$type] = sprintf("%s(s): %s", $type, $ids);
+    }
+    $references = array_values($references);
+
+    return [$references, $count];
+  }
+
+  protected function getParagraphParentType($id) {
+    /** @var Paragraph $paragraph */
+    $paragraph = Paragraph::load($id);
+    if (!empty($paragraph)) {
+      $parent_type = $paragraph->get('parent_type')->value;
+      $parent_id = $paragraph->get('parent_id')->value;
+      if ($parent_type == 'paragraph') {
+        return $this->getParagraphParentType($parent_id);
+      }
+      return [$parent_type, $parent_id];
+    } else {
+      $this->yell(sprintf('Paragraph id %s not found. Skiped', $id), 'yellow');
+      return null;
+    }
   }
 }

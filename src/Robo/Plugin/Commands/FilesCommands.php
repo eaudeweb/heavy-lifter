@@ -136,11 +136,9 @@ class FilesCommands extends CommandBase {
 
     $site = $options['site'];
     $limit = $options['limit'];
-    $output = $this->getIntegrityFiles($limit, $site);
-    $missing = $output['missing'];
-    $orphans = $output['orphan'];
+    list($missing, $orphans, $problem) = $this->getIntegrityFiles($limit, $site);
     $final_records = [];
-    foreach ($output['problem'] as $row) {
+    foreach ($problem as $row) {
       $final_records[$row['fid']] = $row;
     }
     foreach (array_merge($missing, $orphans) as $row) {
