@@ -492,7 +492,8 @@ class CommandBase extends \Robo\Tasks {
       //parent type is also paragraph, search until find the visible parent (e.g
       //node, taxonomy_term, media.
       if ($item->type == 'paragraph') {
-        if (!empty(list($parent_type, $parent_id) = $this->getParagraphParentType($item->id))) {
+        list($parent_type, $parent_id) = $this->getParagraphParentType($item->id);
+        if (!empty($parent_id)) {
           $references['paragraph'][] = sprintf("used in %s: %s", $parent_type, $parent_id);
         }
         continue;
