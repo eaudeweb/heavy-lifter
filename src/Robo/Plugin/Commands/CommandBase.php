@@ -474,7 +474,7 @@ class CommandBase extends \Robo\Tasks {
         'uri' => $row->uri,
         'problem' => 'M',
         'count' => $count,
-        'usage' => implode(',' , $references),
+        'usage' => implode('' , $references),
       ];
 
       if ($total && ++$i % 5000 == 0) {
@@ -505,15 +505,16 @@ class CommandBase extends \Robo\Tasks {
       if ($item->type == 'paragraph') {
         [$parent_type, $parent_id] = $this->getParagraphParentType($item->id);
         if (!empty($parent_id)) {
-          $references['paragraph'][] = sprintf("used in %s: %s", $parent_type, $parent_id);
+          $references['paragraph'][] = sprintf("%s: %s", $parent_type, $parent_id);
         }
         continue;
       }
       $references[$item->type][] = sprintf("%s", $item->id);
     }
     foreach ($references as $type => $items) {
-      $ids = implode(', ', $items);
-      $references[$type] = sprintf("%s(s): %s", $type, $ids);
+      $ids = implode(', ', array_slice($items, 0, 3));
+      $more = (count($items) - 3) ? (count($items) - 3) : 0;
+      $references[$type] = sprintf("%s(s): %s %s\n", $type, $ids, ($more > 0) ? "and {$more} more" : '');
     }
     $references = array_values($references);
 
@@ -531,7 +532,7 @@ class CommandBase extends \Robo\Tasks {
       }
       return [$parent_type, $parent_id];
     } else {
-      $this->yell(sprintf('Paragraph id %s not found. Skipped', $id), 'yellow');
+      $this->yell(sprintf('Paragraph id %s not found. Skipped', $id), 40, 'yellow');
       return null;
     }
   }

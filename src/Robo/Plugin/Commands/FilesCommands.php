@@ -7,6 +7,7 @@ use PhpOffice\PhpSpreadsheet\Calculation\Database;
 use Robo\Exception\TaskException;
 use Robo\Robo;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableCell;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Process\Process;
 
@@ -146,7 +147,7 @@ class FilesCommands extends CommandBase {
         'uri' => $row['uri'],
         'problem' => $row['problem'],
         'count' => $row['count'],
-        'usage' => !empty($row['usage']) ? $row['usage'] : '',
+        'usage' => !empty($row['usage']) ? new TableCell($row['usage'], ['rowspan' => 2]) : '',
       ];
     }
 
