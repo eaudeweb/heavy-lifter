@@ -116,9 +116,8 @@ class FilesCommands extends CommandBase {
   }
 
   /**
-   * Get integrity of files recorded in file_managed but they're missing from
-   * disk or recorded in file_managed with no record in file_usage.
-   * Use option limit to interrogate a limited number of records from tables.
+   * Perform integrity on managed files: report missing files or unused files.
+   * Use --limit=10 to analyze only ten files from file_managed table.
    *
    * @command files:integrity-check
 
@@ -151,17 +150,21 @@ class FilesCommands extends CommandBase {
       ];
     }
 
-    //Create the output table
-    echo "M = File recorded in file_managed but missing from disk\nO = File recorded in file_managed by no record in file_usage\n";
-    $output = new BufferedOutput();
-    $tbl = new Table($output);
-    $tbl->setHeaders(["FID", "Path", "Problem", "Count", "Usage"]);
-    $tbl->setColumnWidths([7, 10, 4, 2, 10]);
-    $tbl->setRows($final_records);
-    $tbl->render();
-    $tbl = $output->fetch();
-    $tbl_lines = substr_count($tbl, "\n");
-    $this->output->write($tbl);
-    echo "M = File recorded in file_managed but missing from disk\nO = File recorded in file_managed by no record in file_usage\n";
+    if (!empty($final_records)) {
+      //Create the output table
+      echo "M = File recorded in file_managed but missing from disk\nO = File recorded in file_managed by no record in file_usage\n";
+      $output = new BufferedOutput();
+      $tbl = new Table($output);
+      $tbl->setHeaders(["FID", "Path", "Problem", "Count", "Usage"]);
+      $tbl->setColumnWidths([7, 10, 4, 2, 10]);
+      $tbl->setRows($final_records);
+      $tbl->render();
+      $tbl = $output->fetch();
+      $tbl_lines = substr_count($tbl, "\n");
+      $this->output->write($tbl);
+      echo "M = File recorded in file_managed but missing from disk\nO = File recorded in file_managed by no record in file_usage\n";
+    } else {
+      $this->output->write("Done. No issues detected\n");
+    }
   }
 }

@@ -376,7 +376,7 @@ class CommandBase extends \Robo\Tasks {
     /** @var \Drupal\Core\StreamWrapper\StreamWrapperManagerInterface $stream_wrapper_manager */
     $stream_wrapper_manager = $container->get('stream_wrapper_manager');
 
-    $this->yell(sprintf("Start to search in %s database", $drupalDatabase->getConnectionOptions()['database']));
+    $this->yell(sprintf("Checking files in %s.file_managed", $drupalDatabase->getConnectionOptions()['database']));
 
     //Files recorded in files_managed
     $query = $drupalDatabase->select('file_managed', 'f')->fields('f', ['fid', 'uri'])->condition('status', 1);
@@ -413,7 +413,9 @@ class CommandBase extends \Robo\Tasks {
         'count' => 'n/a',
       ];
     }
-    echo sprintf("Processed: %04d/%d\n", count($files_not_in_use), $total);
+    if ($total) {
+      echo sprintf("Processed: %04d/%d\n", count($files_not_in_use), $total);
+    }
 
     //Group records from file_usage table by fid
     $arr = [];
@@ -464,12 +466,10 @@ class CommandBase extends \Robo\Tasks {
         'usage' => implode(',' , $references),
       ];
 
-      if (++$i % 5000 == 0) {
+      if ($total && ++$i % 5000 == 0) {
         echo sprintf("Processed: %04d/%d\n", $i, $total);
       }
     }
-
-    echo "Done\n";
     return [$missing, $orphans, $problem];
   }
 
