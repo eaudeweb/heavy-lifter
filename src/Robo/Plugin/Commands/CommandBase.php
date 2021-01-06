@@ -370,7 +370,13 @@ class CommandBase extends \Robo\Tasks {
     $execStack->exec("drush cr")
       ->run();
     $drupalRoot = $this->drupalRoot();
-    $container = self::drupalBoot($site, 'prod');
+    try {
+        $container = self::drupalBoot($site, 'prod');
+    }
+    catch (\Exception $e) {
+        $this->yell('Cannot boot Drupal environment, aborting!', 40, 'red');
+        exit(1);
+    }
 
     /** @var \Drupal\Core\Database\Database $drupalDatabase */
     $drupalDatabase = $container->get('database');
