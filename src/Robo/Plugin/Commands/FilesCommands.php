@@ -162,9 +162,8 @@ class FilesCommands extends CommandBase {
       $tbl = $output->fetch();
       $tbl_lines = substr_count($tbl, "\n");
       $this->output->write($tbl);
-      echo "M = File recorded in file_managed but missing from disk\nO = File recorded in file_managed by no record in file_usage\n";
     } else {
-      $this->output->write("Done. No issues detected\n");
+      $this->output->write("No issue detected\n");
     }
   }
 }

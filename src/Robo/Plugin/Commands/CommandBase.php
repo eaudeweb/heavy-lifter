@@ -401,7 +401,7 @@ class CommandBase extends \Robo\Tasks {
     }
     $files_not_in_use = $query->execute()->fetchAll();
 
-    $total = count($files_not_in_use) + count($file_managed);
+    $total = count($file_managed);
 
     $missing = $problem = $orphans = [];
     //list with orphans
@@ -413,8 +413,10 @@ class CommandBase extends \Robo\Tasks {
         'count' => 'n/a',
       ];
     }
-    if ($total) {
-      echo sprintf("Processed: %04d/%d\n", count($files_not_in_use), $total);
+    echo sprintf("\nSummary:\n");
+    echo sprintf("Files recorded in file_managed: %d\n", $total);
+    if (count($files_not_in_use)) {
+      echo sprintf("Files not in use: %d\n", count($files_not_in_use));
     }
 
     //Group records from file_usage table by fid
@@ -456,7 +458,7 @@ class CommandBase extends \Robo\Tasks {
       $count = 0;
       //If file exist and is used, prepare the array
       if (!empty($files_in_use[$row->fid])) {
-        list($references, $count) = $this->getlistUsage($files_in_use[$row->fid]);
+        [$references, $count] = $this->getlistUsage($files_in_use[$row->fid]);
       }
       $missing[$row->fid] = [
         'fid' => $row->fid,
@@ -492,7 +494,7 @@ class CommandBase extends \Robo\Tasks {
       //parent type is also paragraph, search until find the visible parent (e.g
       //node, taxonomy_term, media.
       if ($item->type == 'paragraph') {
-        list($parent_type, $parent_id) = $this->getParagraphParentType($item->id);
+        [$parent_type, $parent_id] = $this->getParagraphParentType($item->id);
         if (!empty($parent_id)) {
           $references['paragraph'][] = sprintf("used in %s: %s", $parent_type, $parent_id);
         }
