@@ -366,9 +366,6 @@ class CommandBase extends \Robo\Tasks {
    */
 
   protected function getIntegrityFiles($limit = '', $site = 'default') {
-    $execStack = $this->taskExecStack()->stopOnFail(TRUE);
-    $execStack->exec("drush cr")
-      ->run();
     $drupalRoot = $this->drupalRoot();
     try {
         $container = self::drupalBoot($site, 'prod');
