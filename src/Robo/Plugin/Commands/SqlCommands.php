@@ -29,6 +29,7 @@ class SqlCommands extends CommandBase {
    *
    */
   public function sqlDownload($destination, $options = ['site' => 'default']) {
+    $this->validateConfig();
     $site = $options['site'];
     $url =  $this->configSite('sql.sync.source', $site);
     $username = $this->configSite('sync.username', $site);
@@ -57,6 +58,7 @@ class SqlCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function sqlSync($options = ['anonymize' => FALSE, 'site' => 'default']) {
+    $this->validateConfig();
     $this->allowOnlyOnLinux();
     $site = $options['site'];
 

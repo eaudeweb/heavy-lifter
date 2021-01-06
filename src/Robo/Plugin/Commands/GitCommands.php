@@ -29,7 +29,6 @@ class GitCommands extends CommandBase {
     $projectDir = $this->projectDir();
     $drupalRoot = $this->drupalRoot();
 
-
     if (!file_exists("$projectDir/.git")) {
       throw new TaskException($this, 'This command can only be run inside git repositories. Please run `git init` first.');
     }

@@ -17,13 +17,6 @@ class SiteCommands extends CommandBase {
   use \EauDeWeb\Robo\Task\Curl\loadTasks;
 
   /**
-   * @inheritdoc
-   */
-  protected function validateConfig() {
-    parent::validateConfig();
-  }
-
-  /**
    * Setup development.
    *
    * @command site:develop
@@ -94,6 +87,7 @@ class SiteCommands extends CommandBase {
    */
   public function siteInstall($options = ['site' => 'default']) {
     $this->allowOnlyOnLinux();
+    $this->validateConfig();
     $site = $options['site'];
     $url =  $this->configSite('sql.sync.source', $site);
     $this->validateHttpsUrl($url);
@@ -236,7 +230,6 @@ class SiteCommands extends CommandBase {
   public function siteUpdate($options = ['site' => 'default']) {
     $this->allowOnlyOnLinux();
     $site = $options['site'];
-    $this->validateConfig();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $drush = $this->drushExecutable($site);
     $commands = [];
@@ -362,7 +355,6 @@ class SiteCommands extends CommandBase {
    * @throws \Robo\Exception\TaskException
    */
   public function siteStatus($options = ['site' => 'default']) {
-    $this->validateConfig();
     $site = $options['site'];
     if ($this->isDrush9()) {
       $this->taskExec("drush -l {$site} st")->run();
