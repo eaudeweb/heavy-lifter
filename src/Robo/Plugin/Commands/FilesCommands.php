@@ -116,33 +116,38 @@ class FilesCommands extends CommandBase {
     return $build->run();
   }
 
-  /**
-   * Perform integrity on managed files: report missing files or unused files.
-   * Use --limit=10 to analyze only ten files from file_managed table.
-   *
-   * @command files:integrity-check
-
-   * @param array $options
-   *  Command options.
-   * @return null|\Robo\Result
-   * @throws \Robo\Exception\TaskException when output path is not absolute
-   */
+    /**
+     * Perform integrity on managed files: report missing files or unused
+     * files.
+     * Use --limit=10 to analyze only ten files from file_managed table.
+     *
+     * @command files:integrity-check
+     *
+     * @param array $options
+     *  Command options.
+     *
+     * @throws \Robo\Exception\TaskException
+     *   When output path is not absolute
+     * @throws \Exception
+     *   Under various circumstances
+     */
   public function checkIntegrity($options = ['limit' => NULL, 'site' => 'default']) {
     if (!$this->isDrush9()) {
       throw new \Exception('Need drupal 8');
-      return FALSE;
     }
     $this->allowOnlyOnLinux();
 
     $site = $options['site'];
     $limit = $options['limit'];
     list($missing, $orphans, $problem) = $this->getIntegrityFiles($limit, $site);
-    $final_records = [];
+    $rows = [];
     foreach ($problem as $row) {
-      $final_records[$row['fid']] = $row;
+      $fid = $row['fid'];
+      $rows[$fid] = $row;
     }
     foreach (array_merge($missing, $orphans) as $row) {
-      $final_records[$row['fid']] = [
+      $fid = $row['fid'];
+      $rows[$fid] = [
         'fid' => $row['fid'],
         'uri' => $row['uri'],
         'problem' => $row['problem'],
@@ -151,20 +156,20 @@ class FilesCommands extends CommandBase {
       ];
     }
 
-    if (!empty($final_records)) {
-      //Create the output table
-      echo "M = File recorded in file_managed but missing from disk\nO = File recorded in file_managed by no record in file_usage\n";
+    if (!empty($rows)) {
+      echo "M = File recorded in file_managed but missing from disk\n";
+      echo "O = File recorded in file_managed by no record in file_usage\n";
+      // Create the output table
       $output = new BufferedOutput();
       $tbl = new Table($output);
       $tbl->setHeaders(["FID", "Path", "Problem", "Count", "Usage"]);
       $tbl->setColumnWidths([7, 10, 4, 2, 10]);
-      $tbl->setRows($final_records);
+      $tbl->setRows($rows);
       $tbl->render();
       $tbl = $output->fetch();
-      $tbl_lines = substr_count($tbl, "\n");
       $this->output->write($tbl);
     } else {
-      $this->output->write("No issue detected\n");
+      $this->output->write("No issues detected\n");
     }
   }
 }
