@@ -20,13 +20,6 @@ class SiteCommands extends CommandBase {
   use loadTasks;
 
   /**
-   * @inheritdoc
-   */
-  protected function validateConfig() : void {
-    parent::validateConfig();
-  }
-
-  /**
    * Setup development.
    *
    * @command site:develop
