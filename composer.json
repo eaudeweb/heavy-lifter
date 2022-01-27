@@ -5,10 +5,8 @@
     "require": {
         "webflo/drupal-finder": "^1.2",
         "php": ">=7.3",
-        "eaudeweb/robo-curl": "2.0.0-alpha1",
-        "ext-json": "*"
-    },
-    "require-dev": {
+        "ext-json": "*",
+        "eaudeweb/robo-curl": "2.0.0-alpha2"
     },
     "suggest": {
         "eaudeweb/gdpr-dump": "1.0.6"
