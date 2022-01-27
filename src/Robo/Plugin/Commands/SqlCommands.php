@@ -36,7 +36,7 @@ class SqlCommands extends CommandBase {
       ->followRedirects()
       ->failOnHttpError()
       ->locationTrusted()
-      ->output($destination)
+      ->option('-o', $destination)
       ->basicAuth($username, $password)
       ->option('--create-dirs')
       ->run();

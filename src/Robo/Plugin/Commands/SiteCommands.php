@@ -106,7 +106,7 @@ class SiteCommands extends CommandBase {
       ->followRedirects()
       ->failOnHttpError()
       ->locationTrusted()
-      ->output($dest_gz)
+      ->option('-o', $dest_gz)
       ->basicAuth($username, $password)
       ->option('--create-dirs')
       ->run();
