@@ -204,7 +204,7 @@ class CommandBase extends \Robo\Tasks {
    */
   protected function isModuleEnabled($module) {
     $drush = $this->drushExecutable();
-    $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
+    $p = new Process([$drush, "pml", "--type=module --status=enabled | grep '($module)'"]);
     $p->run();
     return !empty($p->getOutput());
   }
@@ -236,7 +236,7 @@ class CommandBase extends \Robo\Tasks {
    */
   protected function getModuleInfo($module) {
     $drush = $this->drushExecutable();
-    $p = new Process("$drush pml --type=module --status=enabled | grep '($module)'");
+    $p = new Process([$drush, 'pml', "--type=module --status=enabled | grep '($module)'"]);
     $p->run();
     return $p->getOutput();
   }

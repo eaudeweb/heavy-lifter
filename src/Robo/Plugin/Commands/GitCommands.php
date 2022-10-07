@@ -42,7 +42,7 @@ class GitCommands extends CommandBase {
       $execStack->exec("rm -rf $vendorDir/drupal/coder/.git");
     }
 
-    $p = new Process("$vendorDir/bin/phpcs --config-show");
+    $p = new Process(["$vendorDir/bin/phpcs", "--config-show"]);
     $p->run();
     if (strpos($p->getOutput(), 'drupal/coder/coder_sniffer') === FALSE) {
       $execStack->exec("$vendorDir/bin/phpcs --config-set installed_paths ../../drupal/coder/coder_sniffer");
