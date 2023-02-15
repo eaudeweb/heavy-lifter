@@ -249,7 +249,7 @@ class SiteCommands extends CommandBase {
       }
       $commands[] = 'updatedb -y';
       if ($this->isDrushVersionBiggerThan('10.3')) {
-        $commands[] = 'site:deploy -y';
+        $commands[] = 'deploy:hook -y';
       }
 
       if ($this->isModuleEnabled('locale')) {
