@@ -248,6 +248,9 @@ class SiteCommands extends CommandBase {
         $commands[] = 'config-import -y';
       }
       $commands[] = 'updatedb -y';
+      if ($this->isDrushVersionBiggerThan('10.3')) {
+        $commands[] = 'site:deploy -y';
+      }
 
       if ($this->isModuleEnabled('locale')) {
         $commands[] = 'locale:check';

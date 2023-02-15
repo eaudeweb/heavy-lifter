@@ -199,6 +199,16 @@ class CommandBase extends \Robo\Tasks {
   }
 
   /**
+   * @param string $version
+   * @return bool
+   * @throws \Robo\Exception\TaskException
+   */
+  protected function isDrushVersionBiggerThan($version) {
+    $drushVersion = $this->getDrushVersion();
+    return version_compare($drushVersion, $version) >= 0;
+  }
+
+  /**
    * @param $module
    * @return bool
    */
