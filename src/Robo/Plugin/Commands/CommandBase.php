@@ -201,7 +201,17 @@ class CommandBase extends Tasks {
     return version_compare($drushVersion, '9') >= 0;
   }
 
-    /**
+  /**
+   * @param string $version
+   * @return bool
+   * @throws TaskException
+   */
+  protected function isDrushVersionBiggerThan($version) {
+    $drushVersion = $this->getDrushVersion();
+    return version_compare($drushVersion, $version) >= 0;
+  }
+
+  /**
      * @param $module
      * @return bool
      * @throws TaskException
