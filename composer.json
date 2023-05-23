@@ -6,7 +6,7 @@
         "webflo/drupal-finder": "^1.2",
         "php": ">=7.3",
         "ext-json": "*",
-        "eaudeweb/robo-curl": "2.0.0-alpha2"
+        "eaudeweb/robo-curl": "2.0.0-alpha3"
     },
     "suggest": {
         "eaudeweb/gdpr-dump": "1.0.6"
