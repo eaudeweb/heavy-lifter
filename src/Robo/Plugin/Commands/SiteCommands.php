@@ -237,29 +237,30 @@ class SiteCommands extends CommandBase {
       $out = $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
       $this->handleFailure($out, 'Setting maintenance mode cannot fail ...');
 
-      $out = $this->taskExec("{$drush} updatedb -y")->run();
-      $this->handleFailure($out, 'updatedb may fail once in first phase ...', true);
-
-      $commands[] = 'cache:rebuild';
-      if ($this->configSite('site.develop.config_split') === TRUE) {
-        $commands[] = 'config-split-import -y';
+      if($this->isDrushVersionBiggerThan('10.3')){
+        $commands[] = 'deploy -y';
       }
       else {
-        $commands[] = 'config-import -y';
-      }
-      $commands[] = 'updatedb -y';
-      if ($this->isDrushVersionBiggerThan('10.3')) {
-        $commands[] = 'deploy:hook -y';
-      }
+        $out = $this->taskExec("{$drush} updatedb -y")->run();
+        $this->handleFailure($out, 'updatedb may fail once in first phase ...', TRUE);
 
+        $commands[] = 'cache:rebuild';
+        if ($this->configSite('site.develop.config_split') === TRUE) {
+          $commands[] = 'config-split-import -y';
+        }
+        else {
+          $commands[] = 'config-import -y';
+        }
+        $commands[] = 'updatedb -y';
+      }
       if ($this->isModuleEnabled('locale')) {
         $commands[] = 'locale:check';
         $commands[] = 'locale:update';
       }
 
-//      if ($this->isModuleEnabled('pathauto') && floatval(substr(trim($this->getModuleInfo('pathauto')), -3)) >= 1.4) {
-//        $commands[] = 'pathauto:aliases-generate create all';
-//      }
+      //      if ($this->isModuleEnabled('pathauto') && floatval(substr(trim($this->getModuleInfo('pathauto')), -3)) >= 1.4) {
+      //        $commands[] = 'pathauto:aliases-generate create all';
+      //      }
 
       $commands[] = 'cache:rebuild';
       $commands[] = 'state-set system.maintenance_mode FALSE';
