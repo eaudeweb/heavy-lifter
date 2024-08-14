@@ -241,23 +241,28 @@ class SiteCommands extends CommandBase {
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $drush = $this->drushExecutable($site);
     $commands = [];
+
+    $usesDevelopConfigSplit = $this->configSite('site.develop.config_split') === TRUE;
+
     if ($this->isDrush9()) {
       $out = $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
       $this->handleFailure($out, 'Setting maintenance mode cannot fail ...');
 
-      $out = $this->taskExec("{$drush} updatedb -y")->run();
-      $this->handleFailure($out, 'updatedb may fail once in first phase ...', true);
+      if (!$usesDevelopConfigSplit && $this->isDrushVersionBiggerThan('10.3')) {
+        $commands[] = 'deploy -y';
+      } else {
+        $out = $this->taskExec("{$drush} updatedb -y")->run();
+        $this->handleFailure($out, 'updatedb may fail once in first phase ...', TRUE);
 
-      $commands[] = 'cache:rebuild';
-      if ($this->configSite('site.develop.config_split') === TRUE) {
-        $commands[] = 'config-split-import -y';
-      }
-      else {
-        $commands[] = 'config-import -y';
-      }
-      $commands[] = 'updatedb -y';
-      if ($this->isDrushVersionBiggerThan('10.3')) {
-        $commands[] = 'deploy:hook -y';
+        $commands[] = 'cache:rebuild';
+
+        if ($usesDevelopConfigSplit) {
+          $commands[] = 'config-split-import -y';
+        } else {
+          $commands[] = 'config-import -y';
+        }
+
+        $commands[] = 'updatedb -y';
       }
 
       if ($this->isModuleEnabled('locale')) {
@@ -265,15 +270,9 @@ class SiteCommands extends CommandBase {
         $commands[] = 'locale:update';
       }
 
-//      if ($this->isModuleEnabled('pathauto') && floatval(substr(trim($this->getModuleInfo('pathauto')), -3)) >= 1.4) {
-//        $commands[] = 'pathauto:aliases-generate create all';
-//      }
-
       $commands[] = 'cache:rebuild';
       $commands[] = 'state-set system.maintenance_mode FALSE';
-
-    }
-    else {
+    } else {
       // Drupal 7
       $drupalRoot = $this->drupalRoot();
       $execStack->dir($drupalRoot);
