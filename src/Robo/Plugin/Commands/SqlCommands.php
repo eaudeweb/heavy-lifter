@@ -148,6 +148,7 @@ class SqlCommands extends CommandBase {
     if ($this->isDrush9()) {
       $task = $this->taskExec($drush)
         ->rawArg('sql:dump')
+        ->rawArg('--extra-dump=--no-tablespaces')
         ->rawArg('--structure-tables-list=cache,cache_*,watchdog,sessions,history')
         ->option('result-file', $output);
 
