@@ -52,6 +52,10 @@ Note: You run all commands from the project's root folder (i.e. where you store 
 
 * Update the site's configuration and database : `./vendor/bin/robo site:update`
 
+* Update the site's without enabling maintenance mode : `./vendor/bin/robo site:update --enable-maintenance-mode=0`
+
+* Update the site's without checking locale translations : `./vendor/bin/robo site:update --update-locale=0`
+
 * Get the files archive: `./vendor/bin/robo files:sync`
 
 * Create archive with files directory to the given path : `/vendor/bin/robo files:dump [destination]`
