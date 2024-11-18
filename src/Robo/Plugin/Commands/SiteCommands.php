@@ -234,10 +234,11 @@ class SiteCommands extends CommandBase {
    * @return null|Result
    * @throws TaskException
    */
-  public function siteUpdate($options = ['site' => 'default', 'enable-maintenance-mode' => TRUE]) : Result {
+  public function siteUpdate($options = ['site' => 'default', 'enable-maintenance-mode' => TRUE, 'update-locale' => TRUE]) : Result {
     $this->allowOnlyOnLinux();
     $site = $options['site'];
     $enableMaintenanceMode = $options['enable-maintenance-mode'];
+    $updateLocale = $options['update-locale'];
     $this->validateConfig();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $drush = $this->drushExecutable($site);
@@ -268,7 +269,7 @@ class SiteCommands extends CommandBase {
         $commands[] = 'updatedb -y';
       }
 
-      if ($this->isModuleEnabled('locale')) {
+      if ($updateLocale && $this->isModuleEnabled('locale')) {
         $commands[] = 'locale:check';
         $commands[] = 'locale:update';
       }
