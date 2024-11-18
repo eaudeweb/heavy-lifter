@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2612afecc0d5f88ab3e8280c32a90c3d",
+    "content-hash": "722af4cbd095bcb024024788c88d8ff2",
     "packages": [
         {
             "name": "composer/semver",
@@ -533,20 +533,20 @@
         },
         {
             "name": "eaudeweb/robo-curl",
-            "version": "2.0.0-alpha2",
+            "version": "2.0.0-alpha-4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/eaudeweb/robo-curl.git",
-                "reference": "134505c64fd3c485be014a11c6db651a5bbc6173"
+                "reference": "4f98b6dfd7df949adf1294374958968ec6108c76"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/eaudeweb/robo-curl/zipball/134505c64fd3c485be014a11c6db651a5bbc6173",
-                "reference": "134505c64fd3c485be014a11c6db651a5bbc6173",
+                "url": "https://api.github.com/repos/eaudeweb/robo-curl/zipball/4f98b6dfd7df949adf1294374958968ec6108c76",
+                "reference": "4f98b6dfd7df949adf1294374958968ec6108c76",
                 "shasum": ""
             },
             "require": {
-                "consolidation/robo": "^3",
+                "consolidation/robo": "^3 | ^4 | ^5",
                 "php": ">=7.3"
             },
             "require-dev": {
@@ -571,9 +571,9 @@
             "description": "Robo command wrapper for cURL command line client",
             "support": {
                 "issues": "https://github.com/eaudeweb/robo-curl/issues",
-                "source": "https://github.com/eaudeweb/robo-curl/tree/2.0.0-alpha2"
+                "source": "https://github.com/eaudeweb/robo-curl/tree/2.0.0-alpha-4"
             },
-            "time": "2022-01-27T18:37:54+00:00"
+            "time": "2024-11-15T12:00:17+00:00"
         },
         {
             "name": "grasmash/expander",
@@ -2162,5 +2162,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.6.0"
 }
