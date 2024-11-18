@@ -234,9 +234,10 @@ class SiteCommands extends CommandBase {
    * @return null|Result
    * @throws TaskException
    */
-  public function siteUpdate($options = ['site' => 'default']) : Result {
+  public function siteUpdate($options = ['site' => 'default', 'enable-maintenance-mode' => TRUE]) : Result {
     $this->allowOnlyOnLinux();
     $site = $options['site'];
+    $enableMaintenanceMode = $options['enable-maintenance-mode'];
     $this->validateConfig();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $drush = $this->drushExecutable($site);
@@ -245,8 +246,10 @@ class SiteCommands extends CommandBase {
     $usesDevelopConfigSplit = $this->configSite('site.develop.config_split') === TRUE;
 
     if ($this->isDrush9()) {
-      $out = $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
-      $this->handleFailure($out, 'Setting maintenance mode cannot fail ...');
+      if ($enableMaintenanceMode) {
+        $out = $this->taskExec("{$drush} state-set system.maintenance_mode TRUE")->run();
+        $this->handleFailure($out, 'Setting maintenance mode cannot fail ...');
+      }
 
       if (!$usesDevelopConfigSplit && $this->isDrushVersionBiggerThan('10.3')) {
         $commands[] = 'deploy -y';
@@ -271,7 +274,9 @@ class SiteCommands extends CommandBase {
       }
 
       $commands[] = 'cache:rebuild';
-      $commands[] = 'state-set system.maintenance_mode FALSE';
+      if ($enableMaintenanceMode) {
+        $commands[] = 'state-set system.maintenance_mode FALSE';
+      }
     } else {
       // Drupal 7
       $drupalRoot = $this->drupalRoot();
