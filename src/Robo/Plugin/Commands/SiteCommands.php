@@ -117,10 +117,12 @@ class SiteCommands extends CommandBase {
         $this->taskExec('gzip')->option('-d')->arg($dest_gz)
       );
       $drush = $this->drushExecutable($site);
-      $drush = $this->taskDrushStack($drush)
-        ->drush('sql:drop')
-        ->drush(['sql:query','--file', $dest]);
-      $build->addTask($drush);
+      $build->addTask(
+        $this->taskExecStack()
+          ->stopOnFail(true)
+          ->exec([$drush, 'sql:drop'])
+          ->exec([$drush, 'sql:query', '--file', $dest])
+      );
       $sync = $build->run();
       if ($sync->wasSuccessful()) {
         return $this->siteUpdate($options);
@@ -237,8 +239,8 @@ class SiteCommands extends CommandBase {
   public function siteUpdate($options = ['site' => 'default', 'enable-maintenance-mode' => TRUE, 'update-locale' => TRUE]) : Result {
     $this->allowOnlyOnLinux();
     $site = $options['site'];
-    $enableMaintenanceMode = $options['enable-maintenance-mode'];
-    $updateLocale = $options['update-locale'];
+    $enableMaintenanceMode = !empty($options['enable-maintenance-mode']);
+    $updateLocale = !empty($options['update-locale']);
     $this->validateConfig();
     $execStack = $this->taskExecStack()->stopOnFail(TRUE);
     $drush = $this->drushExecutable($site);
