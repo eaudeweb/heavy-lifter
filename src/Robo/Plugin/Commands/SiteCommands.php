@@ -120,7 +120,7 @@ class SiteCommands extends CommandBase {
       $build->addTask(
         $this->taskExecStack()
           ->stopOnFail(true)
-          ->exec([$drush, 'sql:drop'])
+          ->exec([$drush, 'sql:drop -y'])
           ->exec([$drush, 'sql:query', '--file', $dest])
       );
       $sync = $build->run();
