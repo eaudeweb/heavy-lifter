@@ -31,6 +31,9 @@ class SqlCommands extends CommandBase {
     $url =  $this->configSite('sql.sync.source', $site);
     $username = $this->configSite('sync.username', $site);
     $password = $this->configSite('sync.password', $site);
+
+    $url = str_replace('{USER}', $username, $url);
+
     $this->validateHttpsUrl($url);
     return $this->taskCurl($url)
       ->followRedirects()
